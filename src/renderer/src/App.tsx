@@ -1,25 +1,80 @@
 import React, { useState, useEffect, useRef } from 'react'
-import { motion } from 'motion/react'
+import { motion, Reorder } from 'motion/react'
 
 function App(): React.JSX.Element {
   const [isOpen, setIsOpen] = useState(false)
+  const [items, setItems] = useState([1, 2, 3, 4, 5])
   const timerRef = useRef<NodeJS.Timeout | null>(null)
+  const containerRef = useRef<HTMLDivElement | null>(null)
+  const isDraggingRef = useRef(false)
 
-  const handleMouseEnter = () => {
-    setIsOpen(true)
+  useEffect(() => {
+    window.electron.ipcRenderer.send('widget:set-ignore-mouse', !isOpen)
+  }, [isOpen])
 
-    // Clear any existing timer to restart the 10s countdown on re-hover
+  useEffect(() => {
+    const onMove = (e: MouseEvent): void => {
+      if (isDraggingRef.current) return
+
+      const target = e.target as HTMLElement | null
+      const overHandler = target !== null && target.closest('[data-handler]') !== null
+      if (!isOpen) {
+        window.electron.ipcRenderer.send('widget:set-ignore-mouse', !overHandler)
+      }
+    }
+    document.addEventListener('mousemove', onMove)
+    return () => document.removeEventListener('mousemove', onMove)
+  }, [isOpen])
+
+  const collapseWidget = (): void => {
+    setIsOpen(false)
+    window.electron.ipcRenderer.send('widget:collapse')
+  }
+
+  const resetTimer = (): void => {
     if (timerRef.current) {
       clearTimeout(timerRef.current)
     }
-
-    // Auto-close after 10 seconds
-    timerRef.current = setTimeout(() => {
-      setIsOpen(false)
-    }, 3000)c
+    timerRef.current = setTimeout(collapseWidget, 3000)
   }
 
-  // Cleanup timer if component unmounts
+  const handleMouseEnter = (): void => {
+    setIsOpen(true)
+    window.electron.ipcRenderer.send('widget:expand')
+    resetTimer()
+  }
+
+  const handlePanelMouseMove = (): void => {
+    if (isOpen && !isDraggingRef.current) {
+      resetTimer()
+    }
+  }
+
+  const handleDragStart = (): void => {
+    isDraggingRef.current = true
+    if (timerRef.current) clearTimeout(timerRef.current)
+  }
+
+  const handleDrag = (_: unknown, info: { point: { x: number; y: number } }): void => {
+    if (!containerRef.current) return
+
+    const rect = containerRef.current.getBoundingClientRect()
+    const { x, y } = info.point
+
+    const isOutOfBoundsX = x < rect.left || x > rect.right
+    const isOutOfBoundsY = y < rect.top || y > rect.bottom
+
+    if (isOutOfBoundsX || isOutOfBoundsY) {
+      isDraggingRef.current = false
+      collapseWidget()
+    }
+  }
+
+  const handleDragEnd = (): void => {
+    isDraggingRef.current = false
+    if (isOpen) resetTimer()
+  }
+
   useEffect(() => {
     return () => {
       if (timerRef.current) clearTimeout(timerRef.current)
@@ -27,24 +82,52 @@ function App(): React.JSX.Element {
   }, [])
 
   return (
-    <div className="flex h-full w-full items-center relative overflow-hidden">
-      {/* Handler Button */}
+    <div ref={containerRef} className="flex h-full w-full items-center relative overflow-hidden">
       <button
+        data-handler
         onMouseEnter={handleMouseEnter}
-        className="absolute top-0.5 left-1/2 -translate-x-1/2 h-1 w-16 bg-slate-100 rounded-lg cursor-pointer"
+        className="absolute left-0.5 top-1/2 -translate-y-1/2 w-1 h-16 bg-slate-400 hover:bg-slate-600 transition-colors rounded-xl"
       />
 
-      {/* Animated Component */}
       <motion.div
-        initial={{ y: '-100%', opacity: 0 }}
+        initial={{ x: '-100%', opacity: 0 }}
         animate={{
-          y: isOpen ? 0 : '-100%',
+          x: isOpen ? 0 : '-100%',
           opacity: isOpen ? 1 : 0
         }}
         transition={{ type: 'spring', stiffness: 300, damping: 28 }}
-        className="w-full h-full bg-red-300 z-10"
+        onMouseMove={handlePanelMouseMove}
+        className="w-18 h-fit max-h-full overflow-hidden z-10 rounded-2xl bg-slate-100 border-r border-y border-slate-300 shadow-xl shadow-slate-900/10"
+        style={{
+          padding: '6px',
+          pointerEvents: isOpen ? 'auto' : 'none'
+        }}
       >
-        {/* Your Widget Content Here */}
+        <Reorder.Group
+          as="div"
+          axis="y"
+          values={items}
+          onReorder={setItems}
+          className="flex flex-col items-center gap-2 m-0 p-0 list-none overflow-hidden rounded-xl"
+        >
+          {items.map((value) => (
+            <Reorder.Item
+              key={value}
+              value={value}
+              as="li"
+              dragConstraints={containerRef}
+              dragElastic={0}
+              whileDrag={{ scale: 1.05 }}
+              onDragStart={handleDragStart}
+              onDrag={handleDrag}
+              onDragEnd={handleDragEnd}
+              transition={{ type: 'spring', stiffness: 350, damping: 30 }}
+              className="w-full h-12 flex items-center justify-center bg-white hover:bg-slate-50 border border-slate-200 shadow-sm rounded-xl transition-colors duration-200 cursor-grab active:cursor-grabbing text-slate-800 font-semibold select-none"
+            >
+              {value}
+            </Reorder.Item>
+          ))}
+        </Reorder.Group>
       </motion.div>
     </div>
   )
