@@ -88,6 +88,14 @@ ipcMain.handle('tracker:clear-stats', () => {
   return true
 })
 
+ipcMain.handle('tracker:get-screen', () => {
+  return windowTracker.getScreenStats()
+})
+
+ipcMain.handle('tracker:get-open-stats', () => {
+  return windowTracker.getOpenStats()
+})
+
 ipcMain.on('renderer:log', (_event, ...args: unknown[]) => {
   console.log('[renderer]', ...args)
 })

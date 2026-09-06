@@ -5,7 +5,9 @@ import { electronAPI } from '@electron-toolkit/preload'
 const api = {
   getActiveWindow: () => ipcRenderer.invoke('get-active-window'),
   getTrackerStats: () => ipcRenderer.invoke('tracker:get-stats'),
-  clearTrackerStats: () => ipcRenderer.invoke('tracker:clear-stats')
+  clearTrackerStats: () => ipcRenderer.invoke('tracker:clear-stats'),
+  getScreenTime: () => ipcRenderer.invoke('tracker:get-screen'),
+  getOpenStats: () => ipcRenderer.invoke('tracker:get-open-stats')
 }
 
 // Use `contextBridge` APIs to expose Electron APIs to
