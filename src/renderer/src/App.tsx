@@ -1,28 +1,57 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { motion, Reorder } from 'motion/react'
 
+interface ItemData {
+  id: string
+  type: 'screen-time' | 'hi' | 'temp'
+}
+
 function App(): React.JSX.Element {
   const [isOpen, setIsOpen] = useState(false)
-  const [items, setItems] = useState([1])
+  const [items, setItems] = useState<ItemData[]>([
+    { id: 'item-1', type: 'screen-time' },
+    { id: 'item-2', type: 'hi' },
+    { id: 'item-3', type: 'temp' }
+  ])
   const timerRef = useRef<NodeJS.Timeout | null>(null)
   const containerRef = useRef<HTMLDivElement | null>(null)
   const mainContainerRef = useRef<HTMLDivElement | null>(null)
   const isDraggingRef = useRef(false)
+  const [screenTime, setScreenTime] = useState('00:00')
 
   useEffect(() => {
-    const logActiveWindow = async (): Promise<void> => {
+    const fetchScreenTime = async (): Promise<void> => {
       try {
-        const activeWindow = await window.api.getActiveWindow()
-        const stats = await window.api.getTrackerStats()
-        window.electron.ipcRenderer.send('renderer:log', 'Active window:', activeWindow)
-        window.electron.ipcRenderer.send('renderer:log', 'Tracker stats:', stats)
-      } catch (err) {
-        window.electron.ipcRenderer.send('renderer:log', 'Failed to fetch active window data:', err)
+        const stats = await window.api.getScreenTime()
+        const totalSec = Math.floor((stats?.totalScreenTimeMs ?? 0) / 1000)
+        const hh = Math.floor(totalSec / 3600)
+        const mm = Math.floor((totalSec % 3600) / 60)
+        const ss = totalSec % 60
+        if (hh > 0) {
+          setScreenTime(`${hh}h ${String(mm).padStart(2, '0')}m`)
+        } else {
+          setScreenTime(`${mm}m ${String(ss).padStart(2, '0')}s`)
+        }
+      } catch {
+        // ignore
       }
     }
 
-    logActiveWindow()
-    const interval = setInterval(logActiveWindow, 3000)
+    const logOpenStats = async (): Promise<void> => {
+      try {
+        const openStats = await window.api.getOpenStats()
+        window.electron.ipcRenderer.send('renderer:log', 'Open apps screen time:', openStats)
+      } catch {
+        // ignore
+      }
+    }
+
+    fetchScreenTime()
+    logOpenStats()
+    const interval = setInterval(() => {
+      fetchScreenTime()
+      logOpenStats()
+    }, 1000)
     return () => clearInterval(interval)
   }, [])
 
@@ -148,10 +177,10 @@ function App(): React.JSX.Element {
           onReorder={setItems}
           className="flex flex-col items-center gap-2 m-0 p-0 list-none relative"
         >
-          {items.map((value) => (
+          {items.map((item) => (
             <Reorder.Item
-              key={value}
-              value={value}
+              key={item.id}
+              value={item}
               as="li"
               dragConstraints={mainContainerRef}
               dragElastic={0.1}
@@ -160,11 +189,23 @@ function App(): React.JSX.Element {
               onDrag={handleDrag}
               onDragEnd={handleDragEnd}
               transition={{ type: 'spring', stiffness: 350, damping: 30 }}
-              className="w-full min-h-12 flex flex-col bg-white hover:bg-slate-50 border border-slate-200 shadow-sm rounded-xl transition-colors duration-200 text-slate-800 font-semibold select-none touch-none"
+              className="w-full flex flex-col items-center justify-center py-2 bg-white hover:bg-slate-50 border border-slate-200 shadow-sm rounded-xl transition-colors duration-200 text-slate-800 font-semibold select-none touch-none cursor-grab active:cursor-grabbing"
             >
-              <div className={"flex flex-col items-center *:text-4xl"}>
-
-              </div>
+              {item.type === 'screen-time' && (
+                <div className="flex flex-col items-center text-xs">
+                  <span>{screenTime}</span>
+                </div>
+              )}
+              {item.type === 'hi' && (
+                <div className="flex flex-col items-center text-xs">
+                  <span>Hi</span>
+                </div>
+              )}
+              {item.type === 'temp' && (
+                <div className="flex flex-col items-center text-xs">
+                  <span>29°</span>
+                </div>
+              )}
             </Reorder.Item>
           ))}
         </Reorder.Group>
