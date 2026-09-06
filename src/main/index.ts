@@ -1,4 +1,4 @@
-import { app, shell, BrowserWindow, screen, Tray, Menu, nativeImage } from 'electron'
+import { app, shell, BrowserWindow, screen, Tray, Menu, nativeImage, ipcMain } from 'electron'
 import { join } from 'path'
 import { electronApp, is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
@@ -6,18 +6,52 @@ import icon from '../../resources/icon.png?asset'
 let mainWindow: BrowserWindow | null = null
 let tray: Tray | null = null
 
-const WIDGET_WIDTH = 300
-const WIDGET_HEIGHT_PERCENT = 0.04
+const WIDGET_WIDTH = 320
+
+// Panel Height Percentages (Collapsed vs Expanded)
+const COLLAPSED_HEIGHT_PERCENT = 0.2 // 20% height for handler strip
+const EXPANDED_HEIGHT_PERCENT = 0.7 // 70% height when expanded
+
+function getCollapsedHeight(): number {
+  const { workArea } = screen.getPrimaryDisplay()
+  return Math.max(120, Math.round(workArea.height * COLLAPSED_HEIGHT_PERCENT))
+}
+
+function getExpandedHeight(): number {
+  const { workArea } = screen.getPrimaryDisplay()
+  return Math.max(400, Math.round(workArea.height * EXPANDED_HEIGHT_PERCENT))
+}
+
+// Calculate centered Y position for any given height
+function getWidgetY(height: number): number {
+  const { workArea } = screen.getPrimaryDisplay()
+  return Math.round(workArea.y + (workArea.height - height) / 2)
+}
+
+function setWidgetHeight(targetHeight: number): void {
+  if (!mainWindow || mainWindow.isDestroyed()) return
+
+  const targetY = getWidgetY(targetHeight)
+  const bounds = mainWindow.getBounds()
+
+  // Update bounds with both height AND recalibrated Y center
+  mainWindow.setBounds({
+    x: bounds.x,
+    y: targetY,
+    width: bounds.width,
+    height: targetHeight
+  })
+}
 
 function createWindow(): void {
   const workArea = screen.getPrimaryDisplay().workArea
-  const height = Math.max(40, Math.round(workArea.height * WIDGET_HEIGHT_PERCENT))
+  const initialHeight = getCollapsedHeight()
 
   mainWindow = new BrowserWindow({
     width: WIDGET_WIDTH,
-    height,
-    x: Math.round(workArea.x + (workArea.width - WIDGET_WIDTH) / 2),
-    y: workArea.y,
+    height: initialHeight,
+    x: workArea.x, // Anchored to far left screen boundary
+    y: getWidgetY(initialHeight),
     show: false,
     frame: false,
     transparent: true,
@@ -39,6 +73,20 @@ function createWindow(): void {
 
   mainWindow.setAlwaysOnTop(true, 'screen-saver')
   mainWindow.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true })
+  mainWindow.setIgnoreMouseEvents(true, { forward: true })
+
+  ipcMain.on('widget:set-ignore-mouse', (_event, ignore: boolean) => {
+    if (!mainWindow || mainWindow.isDestroyed()) return
+    if (ignore) {
+      mainWindow.setIgnoreMouseEvents(true, { forward: true })
+    } else {
+      mainWindow.setIgnoreMouseEvents(false)
+    }
+  })
+
+  // Expand and collapse handlers updating height and Y position
+  ipcMain.on('widget:expand', () => setWidgetHeight(getExpandedHeight()))
+  ipcMain.on('widget:collapse', () => setWidgetHeight(getCollapsedHeight()))
 
   mainWindow.on('ready-to-show', () => {
     mainWindow?.show()
@@ -53,8 +101,6 @@ function createWindow(): void {
     return { action: 'deny' }
   })
 
-  // HMR for renderer base on electron-vite cli.
-  // Load the remote URL for development or the local html file for production.
   if (is.dev && process.env['ELECTRON_RENDERER_URL']) {
     mainWindow.loadURL(process.env['ELECTRON_RENDERER_URL'])
   } else {
@@ -66,7 +112,7 @@ function createTray(): void {
   const trayIcon = nativeImage.createFromPath(icon).resize({ width: 16, height: 16 })
 
   tray = new Tray(trayIcon.isEmpty() ? nativeImage.createEmpty() : trayIcon)
-  tray.setToolTip('Day Widget')
+  tray.setToolTip('Winland')
 
   const menu = Menu.buildFromTemplate([
     {
@@ -99,9 +145,6 @@ function createTray(): void {
   })
 }
 
-// This method will be called when Electron has finished
-// initialization and is ready to create browser windows.
-// Some APIs can only be used after this event occurs.
 app.whenReady().then(() => {
   electronApp.setAppUserModelId('com.electron')
 
