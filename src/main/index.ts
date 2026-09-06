@@ -1,12 +1,14 @@
 import { app, shell, BrowserWindow, screen, Tray, Menu, nativeImage, ipcMain } from 'electron'
 import { join } from 'path'
 import { electronApp, is } from '@electron-toolkit/utils'
+import { activeWindow } from 'get-windows'
+import { windowTracker } from './tracker'
 import icon from '../../resources/icon.png?asset'
 
 let mainWindow: BrowserWindow | null = null
 let tray: Tray | null = null
 
-const WIDGET_WIDTH = 110 // Fixed width for panel + shadow padding
+const WIDGET_WIDTH = 110
 
 function getExpandedHeight(): number {
   const { workArea } = screen.getPrimaryDisplay()
@@ -38,7 +40,7 @@ function createWindow(): void {
     maximizable: false,
     minimizable: false,
     hasShadow: false,
-    focusable: false, // Prevents window from stealing focus from external apps
+    focusable: false,
     ...(process.platform === 'linux' ? { icon } : {}),
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),
@@ -46,11 +48,9 @@ function createWindow(): void {
     }
   })
 
-  // Ensure window stays pinned above all background applications
   mainWindow.setAlwaysOnTop(true, 'screen-saver')
   mainWindow.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true })
 
-  // Initialize mouse click-through with forward: true
   mainWindow.setIgnoreMouseEvents(true, { forward: true })
 
   mainWindow.on('ready-to-show', () => mainWindow?.show())
@@ -70,10 +70,26 @@ function createWindow(): void {
   }
 }
 
-// Single IPC event handler registered once globally
 ipcMain.on('widget:set-ignore-mouse', (_event, ignore: boolean) => {
   if (!mainWindow || mainWindow.isDestroyed()) return
   mainWindow.setIgnoreMouseEvents(ignore, { forward: true })
+})
+
+ipcMain.handle('get-active-window', async () => {
+  return await activeWindow()
+})
+
+ipcMain.handle('tracker:get-stats', () => {
+  return windowTracker.getStats()
+})
+
+ipcMain.handle('tracker:clear-stats', () => {
+  windowTracker.clearStats()
+  return true
+})
+
+ipcMain.on('renderer:log', (_event, ...args: unknown[]) => {
+  console.log('[renderer]', ...args)
 })
 
 function createTray(): void {
@@ -99,12 +115,17 @@ function createTray(): void {
 
 app.whenReady().then(() => {
   electronApp.setAppUserModelId('com.electron')
+  windowTracker.start()
   createTray()
   createWindow()
 
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow()
   })
+})
+
+app.on('will-quit', () => {
+  windowTracker.stop()
 })
 
 app.on('window-all-closed', () => app.quit())

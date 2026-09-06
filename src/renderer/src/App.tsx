@@ -3,11 +3,28 @@ import { motion, Reorder } from 'motion/react'
 
 function App(): React.JSX.Element {
   const [isOpen, setIsOpen] = useState(false)
-  const [items, setItems] = useState([1, 2, 3, 4, 5])
+  const [items, setItems] = useState([1])
   const timerRef = useRef<NodeJS.Timeout | null>(null)
   const containerRef = useRef<HTMLDivElement | null>(null)
   const mainContainerRef = useRef<HTMLDivElement | null>(null)
   const isDraggingRef = useRef(false)
+
+  useEffect(() => {
+    const logActiveWindow = async (): Promise<void> => {
+      try {
+        const activeWindow = await window.api.getActiveWindow()
+        const stats = await window.api.getTrackerStats()
+        window.electron.ipcRenderer.send('renderer:log', 'Active window:', activeWindow)
+        window.electron.ipcRenderer.send('renderer:log', 'Tracker stats:', stats)
+      } catch (err) {
+        window.electron.ipcRenderer.send('renderer:log', 'Failed to fetch active window data:', err)
+      }
+    }
+
+    logActiveWindow()
+    const interval = setInterval(logActiveWindow, 3000)
+    return () => clearInterval(interval)
+  }, [])
 
   // Global cursor hit-testing: ignore mouse when hovering transparent areas
   useEffect(() => {
@@ -103,7 +120,7 @@ function App(): React.JSX.Element {
       <button
         data-handler
         onMouseEnter={handleMouseEnter}
-        className="absolute left-0.5 top-1/2 -translate-y-1/2 w-1 h-16 bg-slate-400 hover:bg-slate-600 transition-colors rounded-xl z-20 pointer-events-auto"
+        className="absolute left-0.5 top-1/2 -translate-y-1/2 w-1 h-16 bg-slate-400 hover:bg-slate-600 transition-colors rounded-xl pointer-events-auto"
       />
 
       {/* Expanded panel container */}
@@ -143,9 +160,11 @@ function App(): React.JSX.Element {
               onDrag={handleDrag}
               onDragEnd={handleDragEnd}
               transition={{ type: 'spring', stiffness: 350, damping: 30 }}
-              className="w-full h-12 flex items-center justify-center bg-white hover:bg-slate-50 border border-slate-200 shadow-sm rounded-xl transition-colors duration-200 cursor-grab active:cursor-grabbing text-slate-800 font-semibold select-none touch-none"
+              className="w-full min-h-12 flex flex-col bg-white hover:bg-slate-50 border border-slate-200 shadow-sm rounded-xl transition-colors duration-200 text-slate-800 font-semibold select-none touch-none"
             >
-              {value}
+              <div className={"flex flex-col items-center *:text-4xl"}>
+
+              </div>
             </Reorder.Item>
           ))}
         </Reorder.Group>

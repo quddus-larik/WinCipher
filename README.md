@@ -1,34 +1,15 @@
-# wigets
+Multi‑clock / multi‑timezone strip with customizable labels and colors.
 
-An Electron application with React and TypeScript
+System monitor tiles (CPU, RAM, GPU, temps, fan speeds) with graphs and thresholds.
 
-## Recommended IDE Setup
+Local folder / project dashboards showing recent files, build status, or git branch.
 
-- [VSCode](https://code.visualstudio.com/) + [ESLint](https://marketplace.visualstudio.com/items?itemName=dbaeumer.vscode-eslint) + [Prettier](https://marketplace.visualstudio.com/items?itemName=esbenp.prettier-vscode)
+Custom quick‑launch bars with icons that run scripts, open terminals in specific folders, or trigger dev workflows.
 
-## Project Setup
+Calendar + tasks overlay that pulls from local files or self‑hosted services instead of Microsoft’s cloud.
 
-### Install
+Music/player mini‑controls for local or self‑hosted media with album art and waveform.
 
-```bash
-$ pnpm install
-```
+Network/dashboard widgets for home lab, servers, or containers (ping, uptime, logs).
 
-### Development
-
-```bash
-$ pnpm dev
-```
-
-### Build
-
-```bash
-# For windows
-$ pnpm build:win
-
-# For macOS
-$ pnpm build:mac
-
-# For Linux
-$ pnpm build:linux
-```
+Notes / sticky tiles with markdown support and local storage.
