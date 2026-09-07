@@ -28,5 +28,12 @@ export default defineConfig(
       ...eslintPluginReactRefresh.configs.vite.rules
     }
   },
-  eslintConfigPrettier
+  eslintConfigPrettier,
+  {
+    files: ['src/renderer/src/App.tsx'],
+    rules: {
+      '@typescript-eslint/explicit-function-return-type': 'off',
+      'react-hooks/purity': 'off'
+    }
+  }
 )

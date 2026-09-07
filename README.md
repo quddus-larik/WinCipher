@@ -1,5 +1,4 @@
 Multi‑clock / multi‑timezone strip with customizable labels and colors.
-
 System monitor tiles (CPU, RAM, GPU, temps, fan speeds) with graphs and thresholds.
 
 Local folder / project dashboards showing recent files, build status, or git branch.

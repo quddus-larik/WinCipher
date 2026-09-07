@@ -8,27 +8,27 @@ import icon from '../../resources/icon.png?asset'
 let mainWindow: BrowserWindow | null = null
 let tray: Tray | null = null
 
-const WIDGET_WIDTH = 110
+const WIDGET_HEIGHT = 120
 
-function getExpandedHeight(): number {
+function getExpandedWidth(): number {
   const { workArea } = screen.getPrimaryDisplay()
-  return Math.max(400, Math.round(workArea.height * 0.7))
+  return Math.max(400, Math.round(workArea.width * 0.7))
 }
 
-function getWidgetY(height: number): number {
+function getWidgetX(width: number): number {
   const { workArea } = screen.getPrimaryDisplay()
-  return Math.round(workArea.y + (workArea.height - height) / 2)
+  return Math.round(workArea.x + (workArea.width - width) / 2)
 }
 
 function createWindow(): void {
   const workArea = screen.getPrimaryDisplay().workArea
-  const fixedHeight = getExpandedHeight()
+  const fixedWidth = getExpandedWidth()
 
   mainWindow = new BrowserWindow({
-    width: WIDGET_WIDTH,
-    height: fixedHeight,
-    x: workArea.x,
-    y: getWidgetY(fixedHeight),
+    width: fixedWidth,
+    height: WIDGET_HEIGHT,
+    x: getWidgetX(fixedWidth),
+    y: workArea.y,
     show: false,
     frame: false,
     transparent: true,

@@ -1,249 +1,409 @@
 import React, { useState, useEffect, useRef } from 'react'
-import { motion, Reorder } from 'motion/react'
+import { motion, Reorder, AnimatePresence } from 'motion/react'
+
+// ─── Types ──────────────────────────────────────────────────────────────────
+
+type WidgetType = 'caffeine' | 'screen-time' | 'streaks' | 'music' | 'weather' | 'task'
 
 interface ItemData {
   id: string
-  type: 'screen-time' | 'hi' | 'temp'
-  isDragging: boolean
+  type: WidgetType
 }
+
+// ─── Mock Data ───────────────────────────────────────────────────────────────
+
+const STREAK_DATA = [
+  0, 1, 3, 2, 0, 1, 2, 3, 3, 1, 0, 2, 3, 1, 0, 2, 2, 3, 1, 0, 0, 1, 3, 3, 2, 1, 2, 3, 0, 1, 3
+]
+
+const TASKS = [{ id: 1, label: 'Review PR #42', done: false }]
+
+// ─── Sub-components ──────────────────────────────────────────────────────────
+
+/* Screen Time */
+function ScreenTimeWidget({ screenTime }: { screenTime: string }) {
+  return (
+    <div className="flex flex-col justify-between h-full px-3 py-2 min-w-[88px]">
+      <span className="text-[9px] font-semibold uppercase tracking-widest text-white/40">
+        Screen
+      </span>
+      <div className="flex items-end gap-0.5">
+        <span className="text-sm font-bold text-white leading-none">{screenTime}</span>
+      </div>
+      <div className="w-full h-0.5 rounded-full bg-white/10 overflow-hidden mt-1">
+        <motion.div
+          className="h-full rounded-full bg-gradient-to-r from-violet-500 to-fuchsia-400"
+          initial={{ width: '0%' }}
+          animate={{ width: '62%' }}
+          transition={{ duration: 1.4, ease: 'easeOut', delay: 0.3 }}
+        />
+      </div>
+    </div>
+  )
+}
+
+/* Music Player */
+function MusicWidget() {
+  const [playing, setPlaying] = useState(true)
+  const [progress, setProgress] = useState(34)
+
+  useEffect(() => {
+    if (!playing) return
+    const id = setInterval(() => setProgress((p) => (p >= 100 ? 0 : p + 0.4)), 200)
+    return () => clearInterval(id)
+  }, [playing])
+
+  const bars = Array.from({ length: 18 }, (_, i) => Math.sin(i * 0.7) * 0.5 + 0.5)
+
+  return (
+    <div className="flex flex-row items-center gap-2 px-2.5 py-1.5 min-w-[148px]">
+      <div className="flex flex-col gap-1 flex-1 min-w-0">
+        <div className="flex items-center justify-between gap-1">
+          <div className="min-w-0">
+            <p className="text-[10px] font-bold text-white truncate leading-none">
+              Blinding Lights
+            </p>
+            <p className="text-[9px] text-white/40 truncate leading-none mt-0.5">The Weeknd</p>
+          </div>
+          <button
+            onMouseDown={(e) => e.stopPropagation()}
+            onClick={() => setPlaying(!playing)}
+            className="shrink-0 size-5 rounded-full bg-white/10 hover:bg-white/20 transition-colors flex items-center justify-center"
+          >
+            {playing ? (
+              <svg width="8" height="8" viewBox="0 0 8 8" fill="white">
+                <rect x="1" y="0.5" width="2" height="7" rx="0.5" />
+                <rect x="5" y="0.5" width="2" height="7" rx="0.5" />
+              </svg>
+            ) : (
+              <svg width="8" height="8" viewBox="0 0 8 8" fill="white">
+                <polygon points="1,0.5 7,4 1,7.5" />
+              </svg>
+            )}
+          </button>
+        </div>
+
+        <div className="relative h-4 w-full flex items-end gap-px overflow-hidden">
+          {bars.map((h, i) => (
+            <div
+              key={i}
+              className="flex-1 rounded-sm transition-all duration-200"
+              style={{
+                height: `${(playing ? h * 0.6 + Math.sin(Date.now() / 300 + i) * 0.2 : h * 0.3) * 100}%`,
+                backgroundColor:
+                  i / bars.length < progress / 100 ? '#a78bfa' : 'rgba(255,255,255,0.15)'
+              }}
+            />
+          ))}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+/* Streaks */
+function StreaksWidget() {
+  const current = 12
+  return (
+    <div className="flex flex-col gap-1.5 px-2.5 py-1.5 min-w-[110px]">
+      <div className="flex items-center justify-between">
+        <span className="text-[9px] font-bold uppercase tracking-widest text-white/40">Streak</span>
+        <div className="flex items-center gap-1">
+          <span className="text-[10px]">🔥</span>
+          <span className="text-[10px] font-black text-orange-400">{current}d</span>
+        </div>
+      </div>
+      <div className="grid grid-cols-[repeat(11,1fr)] gap-0.5">
+        {STREAK_DATA.slice(-22).map((level, idx) => {
+          const opacity = level === 0 ? 0.08 : level === 1 ? 0.35 : level === 2 ? 0.65 : 1
+          const color = level === 0 ? 'bg-white/10' : 'bg-orange-400'
+          return <div key={idx} className={`size-1.5 rounded-sm ${color}`} style={{ opacity }} />
+        })}
+      </div>
+    </div>
+  )
+}
+
+/* Weather */
+function WeatherWidget() {
+  return (
+    <div className="flex flex-col gap-1 px-2.5 py-1.5 min-w-[130px]">
+      <div className="flex items-center justify-between">
+        <div>
+          <p className="text-sm font-black text-white leading-none">28°</p>
+          <p className="text-[9px] text-white/40 leading-none mt-0.5">Rawalpindi · Sunny</p>
+        </div>
+        <span className="text-xl leading-none">☀️</span>
+      </div>
+    </div>
+  )
+}
+
+/* Task */
+function TaskWidget() {
+  const [tasks, setTasks] = useState(TASKS)
+  const toggle = (id: number) =>
+    setTasks((ts) => ts.map((t) => (t.id === id ? { ...t, done: !t.done } : t)))
+  const done = tasks.filter((t) => t.done).length
+
+  return (
+    <div className="flex flex-col gap-1 px-2.5 py-1.5 min-w-[148px]">
+      <div className="flex items-center justify-between mb-0.5">
+        <span className="text-[9px] font-bold uppercase tracking-widest text-white/40">Tasks</span>
+        <span className="text-[9px] font-bold text-emerald-400">
+          {done}/{tasks.length}
+        </span>
+      </div>
+      {tasks.map((t) => (
+        <button
+          key={t.id}
+          onMouseDown={(e) => e.stopPropagation()}
+          onClick={() => toggle(t.id)}
+          className="flex items-center gap-1.5 group text-left w-full"
+        >
+          <div
+            className={`size-2.5 rounded-full border transition-all shrink-0 flex items-center justify-center ${
+              t.done
+                ? 'bg-emerald-400 border-emerald-400'
+                : 'border-white/25 group-hover:border-white/50'
+            }`}
+          >
+            {t.done && (
+              <svg width="5" height="5" viewBox="0 0 5 5" fill="none">
+                <path
+                  d="M0.8 2.5L2 3.7L4.2 1.3"
+                  stroke="black"
+                  strokeWidth="0.8"
+                  strokeLinecap="round"
+                />
+              </svg>
+            )}
+          </div>
+          <span
+            className={`text-[10px] leading-tight transition-colors ${
+              t.done ? 'text-white/25 line-through' : 'text-white/80 group-hover:text-white'
+            }`}
+          >
+            {t.label}
+          </span>
+        </button>
+      ))}
+    </div>
+  )
+}
+
+/* Caffeine Intake */
+function CaffeineWidget() {
+  return (
+    <div className={'py-2 w-32 h-full'}>
+      <div className="relative w-full gap-1 px-1.5 py-2.5 h-full rounded-3xl bg-gradient-to-r from-[#d82a43] via-[#cd253f] to-[#aa1c33] text-white flex flex-col justify-between overflow-hidden shadow-lg select-none">
+        <div className="flex items-center justify-between z-10">
+          <div>
+            <p className="text-sm font-black text-white leading-none">14</p>
+            <p className="text-tiny text-accent leading-none mt-0.5 text-shadow-sm">
+              Cups of Coffee
+            </p>
+          </div>
+          <span className="text-xl leading-none">☕</span>
+        </div>
+        <div className="absolute right-4 top-1/2 -translate-y-1/2 w-28 h-28 pointer-events-none flex items-center justify-center">
+          <div className="absolute inset-0 rounded-full bg-[radial-gradient(circle,_rgba(255,255,255,0.25)_1px,_transparent_1.5px)] bg-[size:8px_8px] [mask-image:radial-gradient(circle_at_center,_black_50%,_transparent_100%)]" />
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ─── Widget Renderer ─────────────────────────────────────────────────────────
+
+function Widget({ type, screenTime }: { type: WidgetType; screenTime: string }) {
+  switch (type) {
+    case 'caffeine':
+      return <CaffeineWidget />
+    case 'screen-time':
+      return <ScreenTimeWidget screenTime={screenTime} />
+    case 'music':
+      return <MusicWidget />
+    case 'streaks':
+      return <StreaksWidget />
+    case 'weather':
+      return <WeatherWidget />
+    case 'task':
+      return <TaskWidget />
+  }
+}
+
+// ─── Main App ────────────────────────────────────────────────────────────────
+
+const INITIAL_ITEMS: ItemData[] = [
+  { id: 'caffeine', type: 'caffeine' },
+  { id: 'screen-time', type: 'screen-time' },
+  { id: 'music', type: 'music' },
+  { id: 'weather', type: 'weather' },
+  { id: 'streaks', type: 'streaks' },
+  { id: 'task', type: 'task' }
+]
 
 function App(): React.JSX.Element {
   const [isOpen, setIsOpen] = useState(false)
-  const alwaysOpen: boolean = true
+  const alwaysOpen = true
 
-  const [items, setItems] = useState<ItemData[]>([
-    { id: 'item-1', type: 'screen-time', isDragging: true },
-    { id: 'item-2', type: 'hi', isDragging: false },
-    { id: 'item-3', type: 'temp', isDragging: false }
-  ])
-
-  // Mock streak activity levels (0: none, 1: low, 2: mid, 3: high)
-  const mockArr = [
-    0, 1, 3, 2, 0, 1, 2, 3, 3, 1, 0, 2, 3, 1, 0, 2, 2, 3, 1, 0, 0, 1, 3, 3, 2, 1, 2, 3, 0, 1, 2
-  ]
+  const [items, setItems] = useState<ItemData[]>(INITIAL_ITEMS)
+  const [screenTime, setScreenTime] = useState('4m 22s')
 
   const timerRef = useRef<NodeJS.Timeout | null>(null)
   const containerRef = useRef<HTMLDivElement | null>(null)
   const mainContainerRef = useRef<HTMLDivElement | null>(null)
   const isDraggingRef = useRef(false)
-  const [screenTime, setScreenTime] = useState('00:00')
 
   const isPanelVisible = alwaysOpen || isOpen
 
   useEffect(() => {
-    const fetchScreenTime = async (): Promise<void> => {
-      try {
-        const stats = await window.api.getScreenTime()
-        const totalSec = Math.floor((stats?.totalScreenTimeMs ?? 0) / 1000)
-        const hh = Math.floor(totalSec / 3600)
-        const mm = Math.floor((totalSec % 3600) / 60)
-        const ss = totalSec % 60
-        if (hh > 0) {
-          setScreenTime(`${hh}h ${String(mm).padStart(2, '0')}m`)
-        } else {
-          setScreenTime(`${mm}m ${String(ss).padStart(2, '0')}s`)
-        }
-      } catch {
-        // ignore
-      }
-    }
-
-    const logOpenStats = async (): Promise<void> => {
-      try {
-        const openStats = await window.api.getOpenStats()
-        window.electron.ipcRenderer.send('renderer:log', 'Open apps screen time:', openStats)
-      } catch {
-        // ignore
-      }
-    }
-
-    fetchScreenTime()
-    logOpenStats()
-    const interval = setInterval(() => {
-      fetchScreenTime()
-      logOpenStats()
+    let sec = 262
+    const id = setInterval(() => {
+      sec++
+      const m = Math.floor(sec / 60)
+      const s = sec % 60
+      setScreenTime(m > 0 ? `${m}m ${String(s).padStart(2, '0')}s` : `${s}s`)
     }, 1000)
-    return () => clearInterval(interval)
+    return () => clearInterval(id)
   }, [])
 
   useEffect(() => {
-    const handleGlobalMouseMove = (e: MouseEvent): void => {
+    const handler = (e: MouseEvent) => {
       if (isDraggingRef.current) return
-
       const target = document.elementFromPoint(e.clientX, e.clientY) as HTMLElement | null
-
-      const isOverInteractive =
+      const isOver =
         target !== null &&
         target !== containerRef.current &&
         (target.closest('[data-handler]') !== null || target.closest('[data-panel]') !== null)
-
-      window.electron.ipcRenderer.send('widget:set-ignore-mouse', !isOverInteractive)
+      window.electron?.ipcRenderer?.send?.('widget:set-ignore-mouse', !isOver)
     }
-
-    window.addEventListener('mousemove', handleGlobalMouseMove)
-    return () => window.removeEventListener('mousemove', handleGlobalMouseMove)
+    window.addEventListener('mousemove', handler)
+    return () => window.removeEventListener('mousemove', handler)
   }, [])
 
-  const collapseWidget = (): void => {
+  const collapseWidget = () => {
     if (timerRef.current) clearTimeout(timerRef.current)
     setIsOpen(false)
   }
-
-  const resetTimer = (): void => {
+  const resetTimer = () => {
     if (timerRef.current) clearTimeout(timerRef.current)
-    timerRef.current = setTimeout(collapseWidget, 3000)
+    timerRef.current = setTimeout(collapseWidget, 3500)
   }
-
-  const handleMouseEnter = (): void => {
+  const handleMouseEnter = () => {
     setIsOpen(true)
-    window.electron.ipcRenderer.send('widget:expand')
+    window.electron?.ipcRenderer?.send?.('widget:expand')
     resetTimer()
   }
-
-  const handlePanelMouseMove = (): void => {
-    if (isOpen && !isDraggingRef.current) {
-      resetTimer()
-    }
-  }
-
-  const handlePanelMouseLeave = (): void => {
-    if (!isDraggingRef.current) {
-      resetTimer()
-    }
-  }
-
-  const handleDragStart = (): void => {
+  const handleDragStart = () => {
     isDraggingRef.current = true
     if (timerRef.current) clearTimeout(timerRef.current)
-    window.electron.ipcRenderer.send('widget:set-ignore-mouse', false)
+    window.electron?.ipcRenderer?.send?.('widget:set-ignore-mouse', false)
   }
-
-  const handleDrag = (_: unknown, info: { point: { x: number; y: number } }): void => {
+  const handleDrag = (_: unknown, info: { point: { x: number; y: number } }) => {
     if (!containerRef.current) return
-
     const rect = containerRef.current.getBoundingClientRect()
-    const { x, y } = info.point
-
-    const isOutOfBoundsX = x < rect.left || x > rect.right
-    const isOutOfBoundsY = y < rect.top || y > rect.bottom
-
-    if (isOutOfBoundsX || isOutOfBoundsY) {
+    if (
+      info.point.x < rect.left ||
+      info.point.x > rect.right ||
+      info.point.y < rect.top ||
+      info.point.y > rect.bottom
+    ) {
       isDraggingRef.current = false
       collapseWidget()
     }
   }
-
-  const handleDragEnd = (): void => {
+  const handleDragEnd = () => {
     isDraggingRef.current = false
     if (isOpen) resetTimer()
   }
-
-  const handleAnimationComplete = (): void => {
+  const handleAnimationComplete = () => {
     if (!isOpen && !alwaysOpen) {
-      window.electron.ipcRenderer.send('widget:collapse')
+      window.electron?.ipcRenderer?.send?.('widget:collapse')
     }
   }
 
-  const handleReorder = (newItems: ItemData[]): void => {
-    const fixedIndex = newItems.findIndex((item) => item.type === 'screen-time')
-    if (fixedIndex !== 0) {
-      const fixedItem = newItems.splice(fixedIndex, 1)[0]
-      newItems.unshift(fixedItem)
-    }
-    setItems(newItems)
-  }
-
-  useEffect(() => {
-    return () => {
+  useEffect(
+    () => () => {
       if (timerRef.current) clearTimeout(timerRef.current)
-    }
-  }, [])
+    },
+    []
+  )
 
   return (
     <div
       ref={containerRef}
-      className="flex h-full w-full items-center relative overflow-hidden pointer-events-none"
+      className="flex h-full w-full items-start justify-center pt-2 relative overflow-hidden pointer-events-none"
+      style={{ fontFamily: "'SF Pro Display', 'Helvetica Neue', sans-serif" }}
     >
-      {!isPanelVisible && (
-        <button
-          data-handler
-          onMouseEnter={handleMouseEnter}
-          className="absolute left-0.5 top-1/2 -translate-y-1/2 w-1 h-16 bg-slate-400 hover:bg-slate-600 transition-colors rounded-xl pointer-events-auto"
-          style={{ marginLeft: '1px' }}
-        />
-      )}
+      <AnimatePresence>
+        {!isPanelVisible && (
+          <motion.button
+            data-handler
+            initial={{ opacity: 0, scaleX: 0.6 }}
+            animate={{ opacity: 1, scaleX: 1 }}
+            exit={{ opacity: 0, scaleX: 0.6 }}
+            transition={{ duration: 0.2 }}
+            onMouseEnter={handleMouseEnter}
+            className="absolute left-1/2 top-2 -translate-x-1/2 w-12 h-1.5 bg-white/20 hover:bg-white/40 transition-colors duration-200 rounded-full pointer-events-auto backdrop-blur-sm"
+          />
+        )}
+      </AnimatePresence>
 
       <motion.div
         data-panel
         ref={mainContainerRef}
-        initial={{ x: '-100%', opacity: 0 }}
+        initial={{ y: '-110%', opacity: 0, scale: 0.95 }}
         animate={{
-          x: isPanelVisible ? 0 : '-100%',
-          opacity: isPanelVisible ? 1 : 0
+          y: isPanelVisible ? 0 : '-110%',
+          opacity: isPanelVisible ? 1 : 0,
+          scale: isPanelVisible ? 1 : 0.95
         }}
-        transition={{ type: 'spring', stiffness: 300, damping: 28 }}
+        transition={{ type: 'spring', stiffness: 320, damping: 30 }}
         onAnimationComplete={handleAnimationComplete}
-        onMouseMove={handlePanelMouseMove}
-        onMouseLeave={handlePanelMouseLeave}
-        className="flex items-center bg-accent/75 border-2 border-accent/70 w-fit h-fit z-10 rounded-2xl shadow-xl overflow-hidden pointer-events-auto p-1"
-        style={{ marginLeft: '5px' }}
+        onMouseMove={() => {
+          if (isOpen && !isDraggingRef.current) resetTimer()
+        }}
+        onMouseLeave={() => {
+          if (!isDraggingRef.current) resetTimer()
+        }}
+        className="absolute top-2 left-1/2 -translate-x-1/2 bg-accent/90 rounded-2xl flex items-stretch h-[60px] pointer-events-auto z-10 font-sans"
+        style={{
+          boxShadow:
+            '0 8px 32px rgba(0,0,0,0.45), 0 1px 0 rgba(255,255,255,0.07) inset, 0 -1px 0 rgba(0,0,0,0.3) inset'
+        }}
       >
         <Reorder.Group
           as="div"
-          axis="y"
+          axis="x"
           values={items}
-          onReorder={handleReorder}
-          className="flex flex-col items-center gap-1 list-none pl-[0.4px]"
+          onReorder={setItems}
+          className="flex flex-row items-stretch list-none m-0 p-0"
+          style={{ gap: 0 }}
         >
-          {items.map((item) => (
-            <Reorder.Item
-              key={item.id}
-              value={item}
-              as="li"
-              drag={item.type !== 'screen-time'}
-              dragConstraints={mainContainerRef}
-              dragElastic={0.1}
-              whileDrag={{ zIndex: 30 }}
-              onDragStart={handleDragStart}
-              onDrag={handleDrag}
-              onDragEnd={handleDragEnd}
-              transition={{ type: 'spring', stiffness: 350, damping: 30 }}
-              className="w-full flex flex-col text-background items-center justify-center p-0 transition-colors font-semibold select-none touch-none cursor-grab active:cursor-grabbing"
-            >
-              {item.type === 'screen-time' && (
-                <div className="flex flex-col items-center *:text-xs px-1 py-0.5 rounded-lg w-full">
-                  <span>{screenTime}</span>
-                </div>
-              )}
-              {item.type === 'hi' && (
-                <div className="grid grid-cols-8 gap-1 p-1 rounded-xl bg-gray-400 shadow-lg place-items-center w-full">
-                  {mockArr.map((level, idx) => {
-                    const intensityClass =
-                      level === 3
-                        ? 'bg-accent opacity-100 shadow-[0_0_6px_rgba(var(--accent-rgb),0.8)] scale-110'
-                        : 'bg-background'
-
-                    return (
-                      <div
-                        key={idx}
-                        className={`size-1 rounded-full transition-all duration-300 ${intensityClass}`}
-                      />
-                    )
-                  })}
-                </div>
-              )}
-              {item.type === 'temp' && (
-                <div className="flex flex-col p-1 rounded-xl bg-gray-400 shadow-lg w-full max-w-[80px] overflow-hidden">
-                  <p className="text-xs">Today</p>
-                  <div className="relative flex w-full overflow-hidden rounded-lg bg-red-400 px-1 py-0.5 ">
-                    <div className="flex shrink-0 min-w-full whitespace-nowrap gap-4">
-                      <span className="text-tiny text-accent">Go to School early today</span>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </Reorder.Item>
-          ))}
+          {items.map((item, idx) => {
+            const isLast = idx === items.length - 1
+            return (
+              <Reorder.Item
+                key={item.id}
+                value={item}
+                as="li"
+                drag="x"
+                dragConstraints={mainContainerRef}
+                dragElastic={0.08}
+                whileDrag={{ zIndex: 30, scale: 1.02, opacity: 0.95 }}
+                onDragStart={handleDragStart}
+                onDrag={handleDrag}
+                onDragEnd={handleDragEnd}
+                transition={{ type: 'spring', stiffness: 400, damping: 32 }}
+                className="flex flex-row items-center text-white select-none touch-none cursor-grab active:cursor-grabbing relative h-full"
+                style={{ listStyle: 'none' }}
+              >
+                <Widget type={item.type} screenTime={screenTime} />
+              </Reorder.Item>
+            )
+          })}
         </Reorder.Group>
       </motion.div>
     </div>
