@@ -3,7 +3,7 @@ import { motion, Reorder, AnimatePresence } from 'motion/react'
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
-type WidgetType = 'caffeine' | 'screen-time' | 'streaks' | 'music' | 'weather' | 'task'
+type WidgetType = 'caffeine' | 'business' | 'screen-time' | 'streaks' | 'music' | 'weather' | 'task'
 
 interface ItemData {
   id: string
@@ -191,7 +191,6 @@ function TaskWidget() {
     </div>
   )
 }
-
 /* Caffeine Intake */
 function CaffeineWidget() {
   return (
@@ -214,12 +213,34 @@ function CaffeineWidget() {
   )
 }
 
+/* Business */
+function BusinessWidget() {
+  return (
+    <div className={'py-2 px-1 w-32 h-full'}>
+      <div className="relative w-full gap-1 px-1.5 py-2.5 h-full rounded-3xl bg-gradient-to-b from-[#b24bf3] via-[#7b2cbf] to-[#240046] text-white flex flex-col justify-between overflow-hidden shadow-2xl shadow-purple-900/50 select-none">
+        <div className="flex items-center justify-between z-10">
+          <div>
+            <p className="text-sm font-black text-white leading-none">370$</p>
+            <p className="text-tiny text-accent leading-none mt-0.5 text-shadow-xs">Market Cap</p>
+          </div>
+          <span className="text-xl leading-none">💵</span>
+        </div>
+        <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(255,255,255,0.15)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.15)_1px,transparent_1px)] bg-[size:14px_14px] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_50%,#000_70%,transparent_100%)] pointer-events-none" />
+        <div className="absolute -top-6 inset-x-0 h-16 bg-white/10 rounded-full blur-md pointer-events-none" />
+        <div className="absolute inset-0 bg-radial from-transparent bg-white/20 via-transparent  pointer-events-none" />
+      </div>
+    </div>
+  )
+}
+
 // ─── Widget Renderer ─────────────────────────────────────────────────────────
 
 function Widget({ type, screenTime }: { type: WidgetType; screenTime: string }) {
   switch (type) {
     case 'caffeine':
       return <CaffeineWidget />
+    case 'business':
+      return <BusinessWidget />
     case 'screen-time':
       return <ScreenTimeWidget screenTime={screenTime} />
     case 'music':
@@ -237,6 +258,7 @@ function Widget({ type, screenTime }: { type: WidgetType; screenTime: string }) 
 
 const INITIAL_ITEMS: ItemData[] = [
   { id: 'caffeine', type: 'caffeine' },
+  { id: 'business', type: 'business' },
   { id: 'screen-time', type: 'screen-time' },
   { id: 'music', type: 'music' },
   { id: 'weather', type: 'weather' },
@@ -246,7 +268,7 @@ const INITIAL_ITEMS: ItemData[] = [
 
 function App(): React.JSX.Element {
   const [isOpen, setIsOpen] = useState(false)
-  const alwaysOpen = true
+  const alwaysOpen = false
 
   const [items, setItems] = useState<ItemData[]>(INITIAL_ITEMS)
   const [screenTime, setScreenTime] = useState('4m 22s')
@@ -368,7 +390,7 @@ function App(): React.JSX.Element {
         onMouseLeave={() => {
           if (!isDraggingRef.current) resetTimer()
         }}
-        className="absolute top-2 left-1/2 -translate-x-1/2 bg-accent/90 rounded-2xl flex items-stretch h-[60px] pointer-events-auto z-10 font-sans"
+        className="absolute top-2 left-1/2 -translate-x-1/2 bg-accent/90 rounded-[18px] flex items-stretch h-[60px] pointer-events-auto z-10 font-sans px-2"
         style={{
           boxShadow:
             '0 8px 32px rgba(0,0,0,0.45), 0 1px 0 rgba(255,255,255,0.07) inset, 0 -1px 0 rgba(0,0,0,0.3) inset'
@@ -382,8 +404,7 @@ function App(): React.JSX.Element {
           className="flex flex-row items-stretch list-none m-0 p-0"
           style={{ gap: 0 }}
         >
-          {items.map((item, idx) => {
-            const isLast = idx === items.length - 1
+          {items.map((item) => {
             return (
               <Reorder.Item
                 key={item.id}
