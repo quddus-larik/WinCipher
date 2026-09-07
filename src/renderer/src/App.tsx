@@ -4,20 +4,31 @@ import { motion, Reorder } from 'motion/react'
 interface ItemData {
   id: string
   type: 'screen-time' | 'hi' | 'temp'
+  isDragging: boolean
 }
 
 function App(): React.JSX.Element {
   const [isOpen, setIsOpen] = useState(false)
+  const alwaysOpen: boolean = true
+
   const [items, setItems] = useState<ItemData[]>([
-    { id: 'item-1', type: 'screen-time' },
-    { id: 'item-2', type: 'hi' },
-    { id: 'item-3', type: 'temp' }
+    { id: 'item-1', type: 'screen-time', isDragging: true },
+    { id: 'item-2', type: 'hi', isDragging: false },
+    { id: 'item-3', type: 'temp', isDragging: false }
   ])
+
+  // Mock streak activity levels (0: none, 1: low, 2: mid, 3: high)
+  const mockArr = [
+    0, 1, 3, 2, 0, 1, 2, 3, 3, 1, 0, 2, 3, 1, 0, 2, 2, 3, 1, 0, 0, 1, 3, 3, 2, 1, 2, 3, 0, 1, 2
+  ]
+
   const timerRef = useRef<NodeJS.Timeout | null>(null)
   const containerRef = useRef<HTMLDivElement | null>(null)
   const mainContainerRef = useRef<HTMLDivElement | null>(null)
   const isDraggingRef = useRef(false)
   const [screenTime, setScreenTime] = useState('00:00')
+
+  const isPanelVisible = alwaysOpen || isOpen
 
   useEffect(() => {
     const fetchScreenTime = async (): Promise<void> => {
@@ -55,14 +66,12 @@ function App(): React.JSX.Element {
     return () => clearInterval(interval)
   }, [])
 
-  // Global cursor hit-testing: ignore mouse when hovering transparent areas
   useEffect(() => {
     const handleGlobalMouseMove = (e: MouseEvent): void => {
       if (isDraggingRef.current) return
 
       const target = document.elementFromPoint(e.clientX, e.clientY) as HTMLElement | null
 
-      // Check if cursor is directly over the trigger bar or the panel
       const isOverInteractive =
         target !== null &&
         target !== containerRef.current &&
@@ -106,6 +115,7 @@ function App(): React.JSX.Element {
   const handleDragStart = (): void => {
     isDraggingRef.current = true
     if (timerRef.current) clearTimeout(timerRef.current)
+    window.electron.ipcRenderer.send('widget:set-ignore-mouse', false)
   }
 
   const handleDrag = (_: unknown, info: { point: { x: number; y: number } }): void => {
@@ -129,9 +139,18 @@ function App(): React.JSX.Element {
   }
 
   const handleAnimationComplete = (): void => {
-    if (!isOpen) {
+    if (!isOpen && !alwaysOpen) {
       window.electron.ipcRenderer.send('widget:collapse')
     }
+  }
+
+  const handleReorder = (newItems: ItemData[]): void => {
+    const fixedIndex = newItems.findIndex((item) => item.type === 'screen-time')
+    if (fixedIndex !== 0) {
+      const fixedItem = newItems.splice(fixedIndex, 1)[0]
+      newItems.unshift(fixedItem)
+    }
+    setItems(newItems)
   }
 
   useEffect(() => {
@@ -145,65 +164,82 @@ function App(): React.JSX.Element {
       ref={containerRef}
       className="flex h-full w-full items-center relative overflow-hidden pointer-events-none"
     >
-      {/* Trigger handle bar */}
-      <button
-        data-handler
-        onMouseEnter={handleMouseEnter}
-        className="absolute left-0.5 top-1/2 -translate-y-1/2 w-1 h-16 bg-slate-400 hover:bg-slate-600 transition-colors rounded-xl pointer-events-auto"
-      />
+      {!isPanelVisible && (
+        <button
+          data-handler
+          onMouseEnter={handleMouseEnter}
+          className="absolute left-0.5 top-1/2 -translate-y-1/2 w-1 h-16 bg-slate-400 hover:bg-slate-600 transition-colors rounded-xl pointer-events-auto"
+          style={{ marginLeft: '1px' }}
+        />
+      )}
 
-      {/* Expanded panel container */}
       <motion.div
         data-panel
         ref={mainContainerRef}
         initial={{ x: '-100%', opacity: 0 }}
         animate={{
-          x: isOpen ? 0 : '-100%',
-          opacity: isOpen ? 1 : 0
+          x: isPanelVisible ? 0 : '-100%',
+          opacity: isPanelVisible ? 1 : 0
         }}
         transition={{ type: 'spring', stiffness: 300, damping: 28 }}
         onAnimationComplete={handleAnimationComplete}
         onMouseMove={handlePanelMouseMove}
         onMouseLeave={handlePanelMouseLeave}
-        className="w-18 h-fit z-10 rounded-2xl bg-slate-100 border-r border-y border-slate-300 shadow-xl shadow-slate-900/10 overflow-hidden pointer-events-auto"
-        style={{
-          padding: '6px'
-        }}
+        className="flex items-center bg-accent/75 border-2 border-accent/70 w-fit h-fit z-10 rounded-2xl shadow-xl overflow-hidden pointer-events-auto p-1"
+        style={{ marginLeft: '5px' }}
       >
         <Reorder.Group
           as="div"
           axis="y"
           values={items}
-          onReorder={setItems}
-          className="flex flex-col items-center gap-2 m-0 p-0 list-none relative"
+          onReorder={handleReorder}
+          className="flex flex-col items-center gap-1 list-none pl-[0.4px]"
         >
           {items.map((item) => (
             <Reorder.Item
               key={item.id}
               value={item}
               as="li"
+              drag={item.type !== 'screen-time'}
               dragConstraints={mainContainerRef}
               dragElastic={0.1}
-              whileDrag={{ scale: 1.05, zIndex: 30 }}
+              whileDrag={{ zIndex: 30 }}
               onDragStart={handleDragStart}
               onDrag={handleDrag}
               onDragEnd={handleDragEnd}
               transition={{ type: 'spring', stiffness: 350, damping: 30 }}
-              className="w-full flex flex-col items-center justify-center py-2 bg-white hover:bg-slate-50 border border-slate-200 shadow-sm rounded-xl transition-colors duration-200 text-slate-800 font-semibold select-none touch-none cursor-grab active:cursor-grabbing"
+              className="w-full flex flex-col text-background items-center justify-center p-0 transition-colors font-semibold select-none touch-none cursor-grab active:cursor-grabbing"
             >
               {item.type === 'screen-time' && (
-                <div className="flex flex-col items-center text-xs">
+                <div className="flex flex-col items-center *:text-xs px-1 py-0.5 rounded-lg w-full">
                   <span>{screenTime}</span>
                 </div>
               )}
               {item.type === 'hi' && (
-                <div className="flex flex-col items-center text-xs">
-                  <span>Hi</span>
+                <div className="grid grid-cols-8 gap-1 p-1 rounded-xl bg-gray-400 shadow-lg place-items-center w-full">
+                  {mockArr.map((level, idx) => {
+                    const intensityClass =
+                      level === 3
+                        ? 'bg-accent opacity-100 shadow-[0_0_6px_rgba(var(--accent-rgb),0.8)] scale-110'
+                        : 'bg-background'
+
+                    return (
+                      <div
+                        key={idx}
+                        className={`size-1 rounded-full transition-all duration-300 ${intensityClass}`}
+                      />
+                    )
+                  })}
                 </div>
               )}
               {item.type === 'temp' && (
-                <div className="flex flex-col items-center text-xs">
-                  <span>29°</span>
+                <div className="flex flex-col p-1 rounded-xl bg-gray-400 shadow-lg w-full max-w-[80px] overflow-hidden">
+                  <p className="text-xs">Today</p>
+                  <div className="relative flex w-full overflow-hidden rounded-lg bg-red-400 px-1 py-0.5 ">
+                    <div className="flex shrink-0 min-w-full whitespace-nowrap gap-4">
+                      <span className="text-tiny text-accent">Go to School early today</span>
+                    </div>
+                  </div>
                 </div>
               )}
             </Reorder.Item>
