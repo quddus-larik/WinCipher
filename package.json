@@ -1,5 +1,5 @@
 {
-  "name": "wigets",
+  "name": "winland",
   "version": "1.0.0",
   "description": "An Electron application with React and TypeScript",
   "main": "./out/main/index.js",
@@ -20,22 +20,42 @@
     "build:mac": "electron-vite build && electron-builder --mac",
     "build:linux": "electron-vite build && electron-builder --linux"
   },
+  "win": {
+    "target": [
+      {
+        "target": "nsis",
+        "arch": [
+          "x64"
+        ]
+      },
+      {
+        "target": "portable",
+        "arch": [
+          "x64"
+        ]
+      }
+    ]
+  },
+  "nsis": {
+    "oneClick": false,
+    "allowToChangeInstallationDirectory": true,
+    "createDesktopShortcut": true
+  },
   "dependencies": {
     "@electron-toolkit/preload": "^3.0.2",
     "@electron-toolkit/utils": "^4.0.0",
-    "@heroui/react": "^3.2.4",
-    "@heroui/styles": "^3.2.4",
     "@tailwindcss/vite": "^4.3.3",
     "active-window": "^0.1.0",
     "electron-updater": "^6.3.9",
-    "get-windows": "^9.3.0",
     "motion": "^13.2.0",
-    "tailwindcss": "^4.3.3"
+    "tailwindcss": "^4.3.3",
+    "vite-plugin-electron": "^1.1.2"
   },
   "devDependencies": {
     "@electron-toolkit/eslint-config-prettier": "^3.0.0",
     "@electron-toolkit/eslint-config-ts": "^3.1.0",
     "@electron-toolkit/tsconfig": "^2.0.0",
+    "@tailwindcss/postcss": "^4.3.3",
     "@types/node": "^22.19.1",
     "@types/react": "^19.2.7",
     "@types/react-dom": "^19.2.3",
@@ -47,6 +67,7 @@
     "eslint-plugin-react": "^7.37.5",
     "eslint-plugin-react-hooks": "^7.0.1",
     "eslint-plugin-react-refresh": "^0.4.24",
+    "postcss": "^8.5.28",
     "prettier": "^3.7.4",
     "react": "^19.2.1",
     "react-dom": "^19.2.1",
@@ -57,8 +78,18 @@
     "onlyBuiltDependencies": [
       "electron",
       "electron-winstaller",
-      "esbuild",
-      "get-windows"
+      "esbuild"
+    ],
+    "overrides": {
+      "@tailwindcss/oxide-wasm32-wasi": "4.0.0"
+    }
+  },
+  "build": {
+    "files": [
+      "out/**/*",
+      "package.json",
+      "!node_modules/@tailwindcss/**/*",
+      "!node_modules/lightningcss*/**/*"
     ]
   }
 }
