@@ -1,8 +1,7 @@
 import { app, shell, BrowserWindow, screen, Tray, Menu, nativeImage, ipcMain } from 'electron'
 import { join } from 'path'
 import { electronApp, is } from '@electron-toolkit/utils'
-import { activeWindow } from 'get-windows'
-import { windowTracker } from './tracker'
+import { screenTracker } from './tracker'
 import icon from '../../resources/icon.png?asset'
 
 let mainWindow: BrowserWindow | null = null
@@ -75,25 +74,17 @@ ipcMain.on('widget:set-ignore-mouse', (_event, ignore: boolean) => {
   mainWindow.setIgnoreMouseEvents(ignore, { forward: true })
 })
 
-ipcMain.handle('get-active-window', async () => {
-  return await activeWindow()
+ipcMain.handle('tracker:get-screen', () => {
+  return screenTracker.getScreenStats()
 })
 
-ipcMain.handle('tracker:get-stats', () => {
-  return windowTracker.getStats()
+ipcMain.handle('tracker:get-daily', () => {
+  return screenTracker.getDailyData()
 })
 
 ipcMain.handle('tracker:clear-stats', () => {
-  windowTracker.clearStats()
+  screenTracker.clearStats()
   return true
-})
-
-ipcMain.handle('tracker:get-screen', () => {
-  return windowTracker.getScreenStats()
-})
-
-ipcMain.handle('tracker:get-open-stats', () => {
-  return windowTracker.getOpenStats()
 })
 
 ipcMain.on('renderer:log', (_event, ...args: unknown[]) => {
@@ -123,17 +114,20 @@ function createTray(): void {
 
 app.whenReady().then(() => {
   electronApp.setAppUserModelId('com.electron')
-  windowTracker.start()
+  screenTracker.start()
   createTray()
   createWindow()
+
+  mainWindow?.on('close', () => {
+    screenTracker.saveToFile()
+  })
 
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow()
   })
 })
 
-app.on('will-quit', () => {
-  windowTracker.stop()
+app.on('window-all-closed', () => {
+  screenTracker.saveToFile()
+  app.quit()
 })
-
-app.on('window-all-closed', () => app.quit())

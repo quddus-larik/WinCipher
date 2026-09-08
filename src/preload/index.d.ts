@@ -1,15 +1,10 @@
-import { ElectronAPI } from '@electron-toolkit/preload'
-import { AppUsage, ScreenStats } from '../main/tracker'
-
 declare global {
   interface Window {
-    electron: ElectronAPI
+    electron: import('@electron-toolkit/preload').ElectronAPI
     api: {
-      getActiveWindow: () => Promise<unknown>
-      getTrackerStats: () => Promise<AppUsage[]>
+      getScreenTime: () => Promise<{ totalScreenTimeMs: number; isIdle: boolean }>
+      getDailyTime: () => Promise<{ date: string; totalMs: number }>
       clearTrackerStats: () => Promise<boolean>
-      getScreenTime: () => Promise<ScreenStats>
-      getOpenStats: () => Promise<AppUsage[]>
     }
   }
 }
