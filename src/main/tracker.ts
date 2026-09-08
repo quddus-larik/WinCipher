@@ -24,7 +24,9 @@ function getDataFile(): string {
 
 class ScreenTracker {
   private intervalId: NodeJS.Timeout | null = null
+  private saveIntervalId: NodeJS.Timeout | null = null
   private pollIntervalMs = 1000
+  private saveIntervalMs = 5000
 
   public start(): void {
     this.loadFromFile()
@@ -35,12 +37,20 @@ class ScreenTracker {
     this.intervalId = setInterval(() => {
       this.tick()
     }, this.pollIntervalMs)
+
+    this.saveIntervalId = setInterval(() => {
+      this.saveToFile()
+    }, this.saveIntervalMs)
   }
 
   public stop(): void {
     if (this.intervalId) {
       clearInterval(this.intervalId)
       this.intervalId = null
+    }
+    if (this.saveIntervalId) {
+      clearInterval(this.saveIntervalId)
+      this.saveIntervalId = null
     }
   }
 
