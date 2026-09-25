@@ -12,9 +12,17 @@
   "app": {
     "windows": [
       {
-        "title": "winland",
-        "width": 800,
-        "height": 600
+        "title": "WinShelf",
+        "width": 50,
+        "height": 300,
+        "x": 0,
+        "y": 300,
+        "resizable": false,
+        "decorations": false,
+        "alwaysOnTop": true,
+        "transparent": true,
+        "skipTaskbar": true,
+        "shadow": false
       }
     ],
     "security": {
