@@ -13,14 +13,14 @@
     "windows": [
       {
         "title": "WinShelf",
-        "width": 50,
-        "height": 300,
-        "x": 0,
-        "y": 300,
-        "resizable": false,
+        "width": 720,
+        "height": 500,
+        "minWidth": 1,
+        "minHeight": 1,
+        "resizable": true,
         "decorations": false,
-        "alwaysOnTop": true,
         "transparent": true,
+        "alwaysOnTop": false,
         "skipTaskbar": true,
         "shadow": false
       }
