@@ -1,3 +1,4 @@
+import {useState} from "react";
 import "./App.css";
 import {Button} from "@/components/ui/button.tsx";
 import {PlusIcon, Settings03Icon} from "@hugeicons/core-free-icons";
@@ -11,14 +12,16 @@ import {useFileUpload} from "@/hooks/use-file-upload";
 
 
 function App() {
+    const [isWorking, setIsWorking] = useState(false);
     const {
         files,
         isDraggingFile,
         fileInputRef,
         openFilePicker,
+        removeFile,
         handleFileInputChange,
         dragHandlers,
-    } = useFileUpload();
+    } = useFileUpload(isWorking);
 
     return (
         <div className={"flex h-svh w-full flex-col overflow-hidden bg-background"}>
@@ -28,24 +31,31 @@ function App() {
                 {...dragHandlers}
             >
                 {files.length > 0 ? (
-                    <FileListTable files={files}/>
+                    <FileListTable
+                        files={files}
+                        onRemove={removeFile}
+                        onBusyChange={setIsWorking}
+                    />
                 ) : (
                     <UploadPrompt isDraggingFile={isDraggingFile}/>
                 )}
-                <input ref={fileInputRef} type="file" accept="*/*" multiple className={"hidden"}
-                       onChange={handleFileInputChange}/>
+                <input ref={fileInputRef} type="file" accept="image/*" multiple disabled={isWorking}
+                       className={"hidden"} onChange={handleFileInputChange}/>
 
 
-                <Tabs defaultSelectedKey="convert" className={"absolute bottom-3 left-1/2 -translate-x-1/2"}>
+                <Tabs defaultSelectedKey="convert" isDisabled={isWorking}
+                      className={"absolute bottom-3 left-1/2 -translate-x-1/2"}>
                     <TabsList>
                         <TabsTrigger id="convert">Convert</TabsTrigger>
-                        <TabsTrigger id="optimise">Optimize</TabsTrigger>
+                        <TabsTrigger id="optimise" isDisabled={true}>Optimize</TabsTrigger>
                     </TabsList>
                 </Tabs>
-                <Button className={"absolute bottom-3 left-3"} variant={"secondary"} size={"icon"}><HugeiconsIcon
+                <Button className={"absolute bottom-3 left-3"} variant={"secondary"} size={"icon"}
+                        isDisabled={true}><HugeiconsIcon
                     icon={Settings03Icon}/></Button>
                 <Button className={"absolute bottom-3 right-3"} variant={"secondary"} size={"icon"}
-                        onClick={openFilePicker}><HugeiconsIcon icon={PlusIcon}/></Button>
+                        isDisabled={isWorking} onClick={openFilePicker}><HugeiconsIcon
+                    icon={PlusIcon}/></Button>
             </main>
         </div>
     );

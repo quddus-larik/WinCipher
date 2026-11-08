@@ -1,22 +1,32 @@
 import {useRef, useState} from "react";
 import type {ChangeEvent, DragEvent} from "react";
+import {isImageFile} from "@/lib/image-utils";
 
 const isFileDrag = (event: DragEvent<HTMLElement>) =>
     event.dataTransfer.types.includes("Files");
 
-export function useFileUpload() {
+export function useFileUpload(disabled = false) {
     const [isDraggingFile, setIsDraggingFile] = useState(false);
     const [files, setFiles] = useState<File[]>([]);
     const dragDepth = useRef(0);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     const addFiles = (fileList: FileList | null) => {
-        if (!fileList || fileList.length === 0) return;
-        setFiles((previousFiles) => [...previousFiles, ...Array.from(fileList)]);
+        if (disabled || !fileList || fileList.length === 0) return;
+
+        const imageFiles = Array.from(fileList).filter(isImageFile);
+        if (imageFiles.length === 0) return;
+
+        setFiles((previousFiles) => [...previousFiles, ...imageFiles]);
     };
 
     const openFilePicker = () => {
+        if (disabled) return;
         fileInputRef.current?.click();
+    };
+
+    const removeFile = (file: File) => {
+        setFiles((previousFiles) => previousFiles.filter((current) => current !== file));
     };
 
     const handleFileInputChange = (event: ChangeEvent<HTMLInputElement>) => {
@@ -25,14 +35,14 @@ export function useFileUpload() {
     };
 
     const handleDragEnter = (event: DragEvent<HTMLElement>) => {
-        if (!isFileDrag(event)) return;
+        if (disabled || !isFileDrag(event)) return;
         event.preventDefault();
         dragDepth.current += 1;
         setIsDraggingFile(true);
     };
 
     const handleDragOver = (event: DragEvent<HTMLElement>) => {
-        if (!isFileDrag(event)) return;
+        if (disabled || !isFileDrag(event)) return;
         event.preventDefault();
         event.dataTransfer.dropEffect = "copy";
     };
@@ -58,6 +68,7 @@ export function useFileUpload() {
         isDraggingFile,
         fileInputRef,
         openFilePicker,
+        removeFile,
         handleFileInputChange,
         dragHandlers: {
             onDragEnter: handleDragEnter,

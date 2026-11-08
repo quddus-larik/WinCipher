@@ -39,19 +39,15 @@ export const conversionFilesData = {
         "image": [
             {
                 "source_format": "PNG",
-                "possible_conversions": ["JPG/JPEG", "WEBP", "BMP", "GIF", "TIFF", "PDF"]
+                "possible_conversions": ["JPG/JPEG", "WEBP", "BMP", "GIF", "TIFF"]
             },
             {
                 "source_format": "JPG/JPEG",
-                "possible_conversions": ["PNG", "WEBP", "BMP", "GIF", "TIFF", "PDF"]
+                "possible_conversions": ["PNG", "WEBP", "BMP", "GIF", "TIFF"]
             },
             {
                 "source_format": "WEBP",
                 "possible_conversions": ["PNG", "JPG/JPEG", "GIF", "BMP"]
-            },
-            {
-                "source_format": "HEIC",
-                "possible_conversions": ["JPG/JPEG", "PNG", "WEBP"]
             }
         ]
     }
