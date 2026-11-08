@@ -16,7 +16,7 @@ import {
 import {Progress} from "@/components/ui/progress"
 import {Badge} from "@/components/ui/badge"
 import {HugeiconsIcon} from '@hugeicons/react';
-import {ArrowRight02Icon, CheckmarkCircle02Icon} from '@hugeicons/core-free-icons';
+import {ArrowRight02Icon, CheckIcon} from '@hugeicons/core-free-icons';
 import {Button} from "@/components/ui/button.tsx";
 import {getImageConversionOptions, getImageFormat, isImageFile} from "@/lib/image-utils";
 
@@ -546,23 +546,17 @@ export function FileListTable({files, onRemove, onBusyChange}: FileListTableProp
                             <TableCell className="font-medium flex gap-2 items-center">
                                 <FilePreview file={file}/>
                                 <div className={"flex min-w-0 flex-col gap-1"}>
-                                    <span title={file.name}>{truncateFileName(file.name)}</span>
+                                    <span title={file.name} className={"flex gap-1 items-center"}>{truncateFileName(file.name)}
+                                        {isConverted && row.progress === 100  ? (
+                                            <HugeiconsIcon size={18} icon={CheckIcon}/>
+                                        ) : null}
+                                    </span>
                                     <div className={"flex items-center gap-1.5"}>
                                         <Progress
                                             aria-label={`${file.name} conversion progress`}
                                             value={row.progress}
                                             className="w-24"
                                         />
-                                        {isConverted && row.progress === 100 ? (
-                                            <span
-                                                className={"flex items-center text-emerald-500 dark:text-emerald-400"}
-                                                role="img"
-                                                aria-label="Conversion complete"
-                                                title="Conversion complete"
-                                            >
-                                                <HugeiconsIcon size={16} icon={CheckmarkCircle02Icon}/>
-                                            </span>
-                                        ) : null}
                                     </div>
                                     {row.error ? (
                                         <span
