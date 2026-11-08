@@ -4,6 +4,19 @@ import {
     Avatar,
     AvatarFallback,
 } from "@/components/ui/avatar";
+import {
+    Combobox,
+    ComboboxContent,
+    ComboboxEmpty,
+    ComboboxInput,
+    ComboboxItem,
+    ComboboxList,
+} from "@/components/ui/combobox";
+import {conversionFilesData} from "@/config/data";
+import { Badge } from "@/components/ui/badge"
+import { HugeiconsIcon } from '@hugeicons/react';
+import { ArrowRight02Icon } from '@hugeicons/core-free-icons';
+
 
 type FileListTableProps = {
     files: File[];
@@ -31,6 +44,48 @@ function getFileType(file: File) {
     return extension && extension !== file.name ? extension.toUpperCase() : "Unknown";
 }
 
+const imageConversions = conversionFilesData.conversions.image;
+const imageFileExtensions = new Set([
+    "png", "jpg", "jpeg", "jfif", "webp", "heic", "heif",
+    "gif", "bmp", "tif", "tiff", "svg", "avif", "ico",
+]);
+
+function getFileExtension(fileName: string) {
+    const lastDotIndex = fileName.lastIndexOf(".");
+    return lastDotIndex > 0 ? fileName.slice(lastDotIndex + 1).toLowerCase() : "";
+}
+
+function isImageFile(file: File) {
+    return file.type.startsWith("image/") || imageFileExtensions.has(getFileExtension(file.name));
+}
+
+function getImageFormat(file: File) {
+    if (!isImageFile(file)) return null;
+
+    const extension = getFileExtension(file.name);
+
+    if (extension === "jpg" || extension === "jpeg" || extension === "jfif") {
+        return "JPG/JPEG";
+    }
+
+    if (extension === "heic" || extension === "heif") {
+        return "HEIC";
+    }
+
+    if (extension) {
+        return extension.toUpperCase();
+    }
+
+    const mimeSubtype = file.type.split("/")[1]?.split("+")[0];
+    return mimeSubtype ? mimeSubtype.toUpperCase() : null;
+}
+
+function getImageConversionOptions(sourceFormat: string) {
+    return imageConversions.find(
+        (conversion) => conversion.source_format === sourceFormat,
+    )?.possible_conversions ?? [];
+}
+
 const maxFileNameLength = 32;
 
 function truncateFileName(fileName: string) {
@@ -56,7 +111,7 @@ function FilePreview({file}: { file: File }) {
     useEffect(() => {
         setHasError(false);
 
-        if (!file.type.startsWith("image/")) {
+        if (!isImageFile(file)) {
             setPreviewUrl(null);
             return;
         }
@@ -87,6 +142,43 @@ function FilePreview({file}: { file: File }) {
     );
 }
 
+function ConvertCell({file}: { file: File }) {
+    const imageFormat = getImageFormat(file);
+
+    if (!imageFormat) {
+        return <span>{getFileType(file)}</span>;
+    }
+
+    const options = getImageConversionOptions(imageFormat);
+
+    if (options.length === 0) {
+        return <span>{imageFormat}</span>;
+    }
+
+    return (
+        <div className={"flex items-center gap-2"}>
+            <Badge className={"rounded-sm"} variant={"secondary"}>{imageFormat}</Badge>
+            <HugeiconsIcon size={16} icon={ArrowRight02Icon} />
+            <Combobox allowsEmptyCollection aria-label={`Convert ${imageFormat} to`}>
+                <ComboboxInput placeholder={"Convert to"} className={"w-36"}/>
+                <ComboboxContent>
+                    <ComboboxList
+                        renderEmptyState={() => (
+                            <ComboboxEmpty>No formats found.</ComboboxEmpty>
+                        )}
+                    >
+                        {options.map((option) => (
+                            <ComboboxItem key={option} id={option}>
+                                {option}
+                            </ComboboxItem>
+                        ))}
+                    </ComboboxList>
+                </ComboboxContent>
+            </Combobox>
+        </div>
+    );
+}
+
 export function FileListTable({files}: FileListTableProps) {
     const totalSize = files.reduce((total, file) => total + file.size, 0);
 
@@ -104,7 +196,7 @@ export function FileListTable({files}: FileListTableProps) {
                             <FilePreview file={file}/>
                             <span title={file.name}>{truncateFileName(file.name)}</span>
                         </TableCell>
-                        <TableCell>{getFileType(file)}</TableCell>
+                        <TableCell><ConvertCell file={file}/></TableCell>
                         <TableCell className="text-right">{formatFileSize(file.size)}</TableCell>
                     </TableRow>
                 ))}

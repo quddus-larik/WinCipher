@@ -8,6 +8,7 @@ import {UploadPrompt} from "@/components/upload-prompt";
 import {useFileUpload} from "@/hooks/use-file-upload";
 
 
+
 function App() {
     const {
         files,
@@ -38,9 +39,9 @@ function App() {
                     <TabsTrigger id="optimise">Optimize</TabsTrigger>
                 </TabsList>
             </Tabs>
-            <Button className={"absolute bottom-3 left-3"} variant={"secondary"} size={"icon-sm"}><HugeiconsIcon
+            <Button className={"absolute bottom-3 left-3"} variant={"secondary"} size={"icon"}><HugeiconsIcon
                 icon={Settings03Icon}/></Button>
-            <Button className={"absolute bottom-3 right-3"} variant={"secondary"} size={"icon-sm"}
+            <Button className={"absolute bottom-3 right-3"} variant={"secondary"} size={"icon"}
                     onClick={openFilePicker}><HugeiconsIcon icon={PlusIcon}/></Button>
         </main>
     );

@@ -1,3 +1,5 @@
+"use client"
+
 import * as React from "react"
 import { cn } from "cn"
 import {
@@ -25,7 +27,7 @@ function Table({ className, ...props }: TableProps) {
     >
       <TablePrimitive
         data-slot="table"
-        className={cn("w-full caption-bottom text-sm", className)}
+        className={cn("w-full caption-bottom text-xs", className)}
         {...props}
       />
     </div>
@@ -115,7 +117,7 @@ function TableCaption({
     <figcaption
       data-slot="table-caption"
       className={cn(
-        "mt-4 text-center text-sm text-muted-foreground",
+        "mt-4 text-center text-xs text-muted-foreground",
         className
       )}
       {...props}

@@ -1,4 +1,4 @@
-const conversionFilesData = {
+export const conversionFilesData = {
     "conversions": {
         "audio": [
             {
