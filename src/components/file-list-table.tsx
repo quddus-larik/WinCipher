@@ -1,4 +1,9 @@
-import {Table, TableBody, TableCell, TableHead, TableHeader, TableRow,TableFooter} from "@/components/ui/table";
+import {useEffect, useState} from "react";
+import {Table, TableBody, TableCell, TableHead, TableHeader, TableRow, TableFooter} from "@/components/ui/table";
+import {
+    Avatar,
+    AvatarFallback,
+} from "@/components/ui/avatar";
 
 type FileListTableProps = {
     files: File[];
@@ -44,20 +49,63 @@ function truncateFileName(fileName: string) {
     return `${baseName.slice(0, visibleBaseLength)}…${extension}`;
 }
 
+function FilePreview({file}: { file: File }) {
+    const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+    const [hasError, setHasError] = useState(false);
+
+    useEffect(() => {
+        setHasError(false);
+
+        if (!file.type.startsWith("image/")) {
+            setPreviewUrl(null);
+            return;
+        }
+
+        const objectUrl = URL.createObjectURL(file);
+        setPreviewUrl(objectUrl);
+
+        return () => URL.revokeObjectURL(objectUrl);
+    }, [file]);
+
+    if (previewUrl && !hasError) {
+        return (
+            <img
+                src={previewUrl}
+                alt={file.name}
+                className={"h-8 w-auto rounded-sm object-contain select-none"}
+                draggable={false}
+                onDragStart={(event) => event.preventDefault()}
+                onError={() => setHasError(true)}
+            />
+        );
+    }
+
+    return (
+        <Avatar>
+            <AvatarFallback className={"rounded-sm"}>CN</AvatarFallback>
+        </Avatar>
+    );
+}
+
 export function FileListTable({files}: FileListTableProps) {
+    const totalSize = files.reduce((total, file) => total + file.size, 0);
+
     return (
         <Table aria-label="Uploaded files">
             <TableHeader>
                 <TableHead isRowHeader>Name</TableHead>
-                <TableHead>Type</TableHead>
-                <TableHead  className="text-right">Size</TableHead>
+                <TableHead>Convert</TableHead>
+                <TableHead className="text-right">Size</TableHead>
             </TableHeader>
             <TableBody>
                 {files.map((file, index) => (
                     <TableRow key={`${file.name}-${file.lastModified}-${index}`}>
-                        <TableCell className="font-medium "><span title={file.name}>{truncateFileName(file.name)}</span></TableCell>
+                        <TableCell className="font-medium flex gap-2 items-center">
+                            <FilePreview file={file}/>
+                            <span title={file.name}>{truncateFileName(file.name)}</span>
+                        </TableCell>
                         <TableCell>{getFileType(file)}</TableCell>
-                        <TableCell  className="text-right">{formatFileSize(file.size)}</TableCell>
+                        <TableCell className="text-right">{formatFileSize(file.size)}</TableCell>
                     </TableRow>
                 ))}
 
@@ -66,7 +114,7 @@ export function FileListTable({files}: FileListTableProps) {
                 <TableRow>
                     <TableCell>Total</TableCell>
                     <TableCell/>
-                    <TableCell className="text-right">$2,500.00</TableCell>
+                    <TableCell className="text-right">{formatFileSize(totalSize)}</TableCell>
                 </TableRow>
             </TableFooter>
         </Table>

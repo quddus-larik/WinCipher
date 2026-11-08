@@ -34,8 +34,8 @@ function App() {
 
             <Tabs defaultSelectedKey="convert" className={"absolute bottom-3 left-1/2 -translate-x-1/2"}>
                 <TabsList>
-                    <TabsTrigger id="convert">Overview</TabsTrigger>
-                    <TabsTrigger id="optimise">Analytics</TabsTrigger>
+                    <TabsTrigger id="convert">Convert</TabsTrigger>
+                    <TabsTrigger id="optimise">Optimize</TabsTrigger>
                 </TabsList>
             </Tabs>
             <Button className={"absolute bottom-3 left-3"} variant={"secondary"} size={"icon-sm"}><HugeiconsIcon
