@@ -12,10 +12,12 @@ import {
     ComboboxItem,
     ComboboxList,
 } from "@/components/ui/combobox";
+import {Progress} from "@/components/ui/progress"
 import {conversionFilesData} from "@/config/data";
-import { Badge } from "@/components/ui/badge"
-import { HugeiconsIcon } from '@hugeicons/react';
-import { ArrowRight02Icon } from '@hugeicons/core-free-icons';
+import {Badge} from "@/components/ui/badge"
+import {HugeiconsIcon} from '@hugeicons/react';
+import {ArrowRight02Icon} from '@hugeicons/core-free-icons';
+import {Button} from "@/components/ui/button.tsx";
 
 
 type FileListTableProps = {
@@ -158,9 +160,9 @@ function ConvertCell({file}: { file: File }) {
     return (
         <div className={"flex items-center gap-2"}>
             <Badge className={"rounded-sm"} variant={"secondary"}>{imageFormat}</Badge>
-            <HugeiconsIcon size={16} icon={ArrowRight02Icon} />
+            <HugeiconsIcon size={16} icon={ArrowRight02Icon}/>
             <Combobox allowsEmptyCollection aria-label={`Convert ${imageFormat} to`}>
-                <ComboboxInput placeholder={"Convert to"} className={"w-36"}/>
+                <ComboboxInput placeholder={"Convert to"} className={"w-20"}/>
                 <ComboboxContent>
                     <ComboboxList
                         renderEmptyState={() => (
@@ -188,16 +190,21 @@ export function FileListTable({files}: FileListTableProps) {
                 <TableHead isRowHeader>Name</TableHead>
                 <TableHead>Convert</TableHead>
                 <TableHead className="text-right">Size</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
             </TableHeader>
             <TableBody>
                 {files.map((file, index) => (
                     <TableRow key={`${file.name}-${file.lastModified}-${index}`}>
                         <TableCell className="font-medium flex gap-2 items-center">
                             <FilePreview file={file}/>
-                            <span title={file.name}>{truncateFileName(file.name)}</span>
+                            <div className={"flex flex-col gap-1"}>
+                                <span title={file.name}>{truncateFileName(file.name)}</span>
+                                <Progress aria-label="Loading" value={55} className="w-24"/>
+                            </div>
                         </TableCell>
                         <TableCell><ConvertCell file={file}/></TableCell>
                         <TableCell className="text-right">{formatFileSize(file.size)}</TableCell>
+                        <TableCell className={"text-right"}><Button variant={"secondary"} size={"sm"}>Save</Button><Button variant={"secondary"} size={"sm"}>Delete</Button></TableCell>
                     </TableRow>
                 ))}
 
@@ -207,6 +214,7 @@ export function FileListTable({files}: FileListTableProps) {
                     <TableCell>Total</TableCell>
                     <TableCell/>
                     <TableCell className="text-right">{formatFileSize(totalSize)}</TableCell>
+                    <TableCell className={"text-right"}><Button size={"sm"}>Save all</Button></TableCell>
                 </TableRow>
             </TableFooter>
         </Table>
