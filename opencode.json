@@ -9,6 +9,14 @@
         "mcp"
       ],
       "enabled": true
+    },
+    "hugeicons": {
+      "type": "local",
+      "command": [
+        "npx",
+        "@hugeicons/mcp-server",
+        "-y"
+      ]
     }
   }
 }
