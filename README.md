@@ -29,6 +29,7 @@
 </p>
 
 ---
+<img src="./src/assets/ui.gif" >
 
 ## Why WinCipher?
 
