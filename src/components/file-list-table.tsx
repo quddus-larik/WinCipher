@@ -162,7 +162,7 @@ function ConvertCell({file}: { file: File }) {
             <Badge className={"rounded-sm"} variant={"secondary"}>{imageFormat}</Badge>
             <HugeiconsIcon size={16} icon={ArrowRight02Icon}/>
             <Combobox allowsEmptyCollection aria-label={`Convert ${imageFormat} to`}>
-                <ComboboxInput placeholder={"Convert to"} className={"w-20"}/>
+                <ComboboxInput placeholder={"Convert to"} className={"w-22"}/>
                 <ComboboxContent>
                     <ComboboxList
                         renderEmptyState={() => (
