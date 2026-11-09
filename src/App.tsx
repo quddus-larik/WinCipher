@@ -39,7 +39,9 @@ function App() {
                 ) : (
                     <UploadPrompt isDraggingFile={isDraggingFile}/>
                 )}
-                <input ref={fileInputRef} type="file" accept="image/*" multiple disabled={isWorking}
+                <input ref={fileInputRef} type="file"
+                       accept="image/*,audio/*,.mp3,.wav,.wave,.flac,.aac,.m4a,.ogg,.oga,.aiff,.aif,.aifc,.caf"
+                       multiple disabled={isWorking}
                        className={"hidden"} onChange={handleFileInputChange}/>
 
 

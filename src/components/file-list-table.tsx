@@ -16,9 +16,11 @@ import {
 import {Progress} from "@/components/ui/progress"
 import {Badge} from "@/components/ui/badge"
 import {HugeiconsIcon} from '@hugeicons/react';
-import {ArrowRight02Icon, CheckIcon} from '@hugeicons/core-free-icons';
+import {ArrowRight02Icon, Cancel01Icon, CheckIcon} from '@hugeicons/core-free-icons';
 import {Button} from "@/components/ui/button.tsx";
 import {getImageConversionOptions, getImageFormat, isImageFile} from "@/lib/image-utils";
+import {getAudioConversionOptions, getAudioFormat} from "@/lib/audio-utils";
+import {isAudioFile, isSupportedFile} from "@/lib/file-utils";
 
 
 type FileListTableProps = {
@@ -40,7 +42,7 @@ type RowConversion = {
     error: string | null;
 };
 
-type ConvertedImage = {
+type ConvertedFile = {
     id: string;
     fileName: string;
     size: number;
@@ -184,7 +186,7 @@ function FilePreview({file}: { file: File }) {
 
     return (
         <Avatar>
-            <AvatarFallback className={"rounded-sm"}>CN</AvatarFallback>
+            <AvatarFallback className={"rounded-sm"}>{isAudioFile(file) ? "AU" : "CN"}</AvatarFallback>
         </Avatar>
     );
 }
@@ -201,24 +203,30 @@ function ConvertCell({
     onTargetChange: (target: string | null) => void;
 }) {
     const imageFormat = getImageFormat(file);
+    const audioFormat = imageFormat ? null : getAudioFormat(file);
+    const sourceFormat = imageFormat ?? audioFormat;
 
-    if (!imageFormat) {
+    if (!sourceFormat) {
         return <span>{getFileType(file)}</span>;
     }
 
-    const options = getImageConversionOptions(imageFormat);
+    const options = imageFormat
+        ? getImageConversionOptions(imageFormat)
+        : audioFormat
+            ? getAudioConversionOptions(audioFormat)
+            : [];
 
     if (options.length === 0) {
-        return <span>{imageFormat}</span>;
+        return <span>{sourceFormat}</span>;
     }
 
     return (
         <div className={"flex items-center gap-2"}>
-            <Badge className={"rounded-sm"} variant={"secondary"}>{imageFormat}</Badge>
+            <Badge className={"rounded-sm"} variant={"secondary"}>{sourceFormat}</Badge>
             <HugeiconsIcon size={16} icon={ArrowRight02Icon}/>
             <Combobox
                 allowsEmptyCollection
-                aria-label={`Convert ${imageFormat} to`}
+                aria-label={`Convert ${sourceFormat} to`}
                 selectedKey={target}
                 onSelectionChange={(key) => onTargetChange(key == null ? null : String(key))}
                 isDisabled={disabled}
@@ -272,7 +280,7 @@ export function FileListTable({files, onRemove, onBusyChange}: FileListTableProp
         const outputId = rows[fileId]?.outputId;
 
         if (outputId) {
-            void invoke("discard_converted_image", {id: outputId}).catch(() => {
+            void invoke("discard_converted_file", {id: outputId}).catch(() => {
             });
         }
 
@@ -332,7 +340,8 @@ export function FileListTable({files, onRemove, onBusyChange}: FileListTableProp
                 });
             }, 300);
 
-            const result = await invoke<ConvertedImage>("convert_image", {
+            const command = isAudioFile(file) ? "convert_audio" : "convert_image";
+            const result = await invoke<ConvertedFile>(command, {
                 id: outputId,
                 fileName: file.name,
                 targetFormat: target,
@@ -350,7 +359,7 @@ export function FileListTable({files, onRemove, onBusyChange}: FileListTableProp
             updateRow(fileId, {
                 status: "error",
                 progress: 0,
-                error: getErrorMessage(error, "Could not convert the image."),
+                error: getErrorMessage(error, "Could not convert the file."),
             });
         } finally {
             if (progressTimer !== undefined) {
@@ -365,7 +374,7 @@ export function FileListTable({files, onRemove, onBusyChange}: FileListTableProp
         const fileId = getFileId(file);
         const target = rows[fileId]?.target;
 
-        if (!target || !isImageFile(file)) return;
+        if (!target || !isSupportedFile(file)) return;
 
         setConversionCount((count) => count + 1);
 
@@ -383,7 +392,7 @@ export function FileListTable({files, onRemove, onBusyChange}: FileListTableProp
             const fileId = getFileId(file);
             const row = rows[fileId];
 
-            if (!row?.target || row.status === "converted" || !isImageFile(file)) {
+            if (!row?.target || row.status === "converted" || !isSupportedFile(file)) {
                 return [];
             }
 
@@ -423,14 +432,14 @@ export function FileListTable({files, onRemove, onBusyChange}: FileListTableProp
         });
     };
 
-    const saveImages = async (outputIds: string[]) => {
+    const saveFiles = async (outputIds: string[]) => {
         if (isBusy || outputIds.length === 0) return;
 
         setSaveCount((count) => count + 1);
         markSaving(outputIds, true);
 
         try {
-            const savedPaths = await invoke<string[] | null>("save_converted_images", {ids: outputIds});
+            const savedPaths = await invoke<string[] | null>("save_converted_files", {ids: outputIds});
 
             if (!savedPaths) {
                 markSaving(outputIds, false);
@@ -456,7 +465,7 @@ export function FileListTable({files, onRemove, onBusyChange}: FileListTableProp
                 return nextRows;
             });
         } catch (error) {
-            markSaving(outputIds, false, getErrorMessage(error, "Could not save the converted images."));
+            markSaving(outputIds, false, getErrorMessage(error, "Could not save the converted files."));
         } finally {
             setSaveCount((count) => Math.max(0, count - 1));
         }
@@ -466,7 +475,7 @@ export function FileListTable({files, onRemove, onBusyChange}: FileListTableProp
         const outputId = rows[fileId]?.outputId;
 
         if (outputId) {
-            void saveImages([outputId]);
+            void saveFiles([outputId]);
         }
     };
 
@@ -477,7 +486,7 @@ export function FileListTable({files, onRemove, onBusyChange}: FileListTableProp
         const outputId = rows[fileId]?.outputId;
 
         if (outputId) {
-            void invoke("discard_converted_image", {id: outputId}).catch(() => {
+            void invoke("discard_converted_file", {id: outputId}).catch(() => {
             });
         }
 
@@ -496,7 +505,7 @@ export function FileListTable({files, onRemove, onBusyChange}: FileListTableProp
 
     const hasPendingConversions = files.some((file) => {
         const row = rows[getFileId(file)];
-        return Boolean(row?.target) && row.status !== "converted" && isImageFile(file);
+        return Boolean(row?.target) && row.status !== "converted" && isSupportedFile(file);
     });
 
     const footerLabel = conversionCount > 0
@@ -513,7 +522,7 @@ export function FileListTable({files, onRemove, onBusyChange}: FileListTableProp
         if (hasPendingConversions) {
             void convertAll();
         } else {
-            void saveImages(convertedOutputIds);
+            void saveFiles(convertedOutputIds);
         }
     };
 
@@ -539,7 +548,7 @@ export function FileListTable({files, onRemove, onBusyChange}: FileListTableProp
                                 : "Convert";
                     const actionDisabled = isBusy || (isConverted
                         ? !row.outputId
-                        : !row.target || !isImageFile(file));
+                        : !row.target || !isSupportedFile(file));
 
                     return (
                         <TableRow key={`${file.name}-${file.lastModified}-${index}`}>
@@ -595,11 +604,12 @@ export function FileListTable({files, onRemove, onBusyChange}: FileListTableProp
                                     </Button>
                                     <Button
                                         variant={"secondary"}
-                                        size={"sm"}
+                                        size={"icon-sm"}
                                         isDisabled={isBusy}
+                                        aria-label={`Remove ${file.name}`}
                                         onPress={() => handleRemove(file)}
                                     >
-                                        Delete
+                                        <HugeiconsIcon icon={Cancel01Icon} size={16}/>
                                     </Button>
                                 </div>
                             </TableCell>
