@@ -1,6 +1,6 @@
 import {useRef, useState} from "react";
 import type {ChangeEvent, DragEvent} from "react";
-import {isImageFile} from "@/lib/image-utils";
+import {isSupportedFile} from "@/lib/file-utils";
 
 const isFileDrag = (event: DragEvent<HTMLElement>) =>
     event.dataTransfer.types.includes("Files");
@@ -14,10 +14,10 @@ export function useFileUpload(disabled = false) {
     const addFiles = (fileList: FileList | null) => {
         if (disabled || !fileList || fileList.length === 0) return;
 
-        const imageFiles = Array.from(fileList).filter(isImageFile);
-        if (imageFiles.length === 0) return;
+        const acceptedFiles = Array.from(fileList).filter(isSupportedFile);
+        if (acceptedFiles.length === 0) return;
 
-        setFiles((previousFiles) => [...previousFiles, ...imageFiles]);
+        setFiles((previousFiles) => [...previousFiles, ...acceptedFiles]);
     };
 
     const openFilePicker = () => {
