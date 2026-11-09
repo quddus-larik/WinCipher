@@ -35,7 +35,7 @@
 
 Most converters make you upload your files, create an account, or wait through an ad-filled website. WinCipher does none of that.
 
-- **Fast** — native image conversion powered by Rust.
+- **Fast** — native image and audio conversion powered by Rust.
 - **Private** — your files never leave your computer.
 - **Offline** — no internet connection required.
 - **Minimal** — a tiny Windows app built for one job: convert and save.
@@ -44,24 +44,32 @@ Most converters make you upload your files, create an account, or wait through a
 
 ## Supported formats
 
-WinCipher currently supports image conversion:
+WinCipher supports native image and audio conversion:
 
-| Input | Convert to |
-| --- | --- |
-| PNG | JPG / JPEG, WEBP, BMP, GIF, TIFF |
-| JPG / JPEG | PNG, WEBP, BMP, GIF, TIFF |
-| WEBP | PNG, JPG / JPEG, BMP, GIF |
+| Type | Input | Convert to |
+| --- | --- | --- |
+| Image | PNG | JPG / JPEG, WEBP, BMP, GIF, TIFF |
+| Image | JPG / JPEG | PNG, WEBP, BMP, GIF, TIFF |
+| Image | WEBP | PNG, JPG / JPEG, BMP, GIF |
+| Audio | MP3 | WAV, FLAC, AAC, M4A, AIFF |
+| Audio | WAV / WAVE | FLAC, MP3, AAC, M4A, AIFF |
+| Audio | FLAC | WAV, MP3, AAC, M4A, AIFF |
+| Audio | AAC | WAV, FLAC, MP3, M4A, AIFF |
+| Audio | M4A / MP4A | WAV, FLAC, MP3, AAC, AIFF |
+| Audio | OGG / OGA | WAV, FLAC, MP3, AAC, M4A, AIFF |
+| Audio | AIFF / AIF / AIFC | WAV, FLAC, MP3, AAC, M4A |
+| Audio | CAF | WAV, FLAC, MP3, AAC, M4A, AIFF |
 
-Only conversions that can be completed by the native image engine are shown, so you never pick an unsupported output format.
+Only conversions that can be completed by the native conversion engine are shown, so you never pick an unsupported output format. `MP4A` is accepted as an alias for `M4A`.
 
-> Audio and video conversion formats are scaffolded for future releases.
+> Video conversion formats are scaffolded for future releases.
 
 ## Install
 
 1. Open the [Releases page](https://github.com/quddus-larik/WinCipher/releases).
 2. Download the latest Windows installer.
 3. Install and launch **WinCipher**.
-4. Drag images into the window — or click the **+** button to choose files.
+4. Drag images or audio files into the window — or click the **+** button to choose files.
 5. Select an output format for each file, then click **Convert** or **Convert all**.
 6. Click **Save** or **Save all** and choose a destination folder using the native Windows folder picker.
 
@@ -105,7 +113,7 @@ pnpm exec tsc --noEmit --ignoreDeprecations 6.0
 ## Tech stack
 
 - **Tauri 2** — lightweight native desktop shell
-- **Rust** — image decoding, conversion, and native file saving
+- **Rust** — image and audio decoding, conversion, and native file saving
 - **React 19 + TypeScript 6** — UI and state
 - **Vite 8** — frontend tooling
 - **Tailwind CSS 4** — styling
@@ -118,7 +126,7 @@ pnpm exec tsc --noEmit --ignoreDeprecations 6.0
 src/                  React frontend
   components/         UI, file table, title bar
   hooks/              File upload and drag/drop state
-  lib/                Image format and conversion helpers
+  lib/                Format detection and conversion helpers
 src-tauri/            Rust backend
   src/lib.rs          Conversion, save, and cleanup commands
   icons/              App icons and logo
