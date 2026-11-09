@@ -1,24 +1,13 @@
 import {conversionFilesData} from "@/config/data";
+import {getFileExtension, isImageFile} from "@/lib/file-utils";
 
-const imageFileExtensions = new Set([
-    "png", "jpg", "jpeg", "jfif", "webp", "heic", "heif",
-    "gif", "bmp", "tif", "tiff", "svg", "avif", "ico",
-]);
+export {getFileExtension, isImageFile};
 
 const supportedTargetFormats = new Set([
     "PNG", "JPG/JPEG", "WEBP", "BMP", "GIF", "TIFF", "ICO", "AVIF",
 ]);
 
 const imageConversions = conversionFilesData.conversions.image;
-
-export function getFileExtension(fileName: string) {
-    const lastDotIndex = fileName.lastIndexOf(".");
-    return lastDotIndex > 0 ? fileName.slice(lastDotIndex + 1).toLowerCase() : "";
-}
-
-export function isImageFile(file: File) {
-    return file.type.startsWith("image/") || imageFileExtensions.has(getFileExtension(file.name));
-}
 
 export function getImageFormat(file: File) {
     if (!isImageFile(file)) return null;

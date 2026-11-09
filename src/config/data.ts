@@ -3,19 +3,35 @@ export const conversionFilesData = {
         "audio": [
             {
                 "source_format": "MP3",
-                "possible_conversions": ["WAV", "AAC", "FLAC", "OGG", "M4A", "WMA"]
+                "possible_conversions": ["WAV", "FLAC", "AAC", "M4A", "AIFF"]
             },
             {
                 "source_format": "WAV",
-                "possible_conversions": ["MP3", "AAC", "FLAC", "OGG", "M4A"]
+                "possible_conversions": ["FLAC", "MP3", "AAC", "M4A", "AIFF"]
             },
             {
                 "source_format": "FLAC",
-                "possible_conversions": ["MP3", "WAV", "AAC", "OGG", "M4A"]
+                "possible_conversions": ["WAV", "MP3", "AAC", "M4A", "AIFF"]
             },
             {
                 "source_format": "AAC",
-                "possible_conversions": ["MP3", "WAV", "M4A", "OGG"]
+                "possible_conversions": ["WAV", "FLAC", "MP3", "M4A", "AIFF"]
+            },
+            {
+                "source_format": "M4A",
+                "possible_conversions": ["WAV", "FLAC", "MP3", "AAC", "AIFF"]
+            },
+            {
+                "source_format": "OGG",
+                "possible_conversions": ["WAV", "FLAC", "MP3", "AAC", "M4A", "AIFF"]
+            },
+            {
+                "source_format": "AIFF",
+                "possible_conversions": ["WAV", "FLAC", "MP3", "AAC", "M4A"]
+            },
+            {
+                "source_format": "CAF",
+                "possible_conversions": ["WAV", "FLAC", "MP3", "AAC", "M4A", "AIFF"]
             }
         ],
         "video": [
