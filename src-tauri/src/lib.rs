@@ -804,6 +804,8 @@ fn discard_converted_file(state: tauri::State<'_, ConversionState>, id: String) 
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
+        .plugin(tauri_plugin_updater::Builder::new().build())
+        .plugin(tauri_plugin_process::init())
         .manage(ConversionState::default())
         .invoke_handler(tauri::generate_handler![
             greet,

@@ -1,8 +1,8 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "win-cipher",
-  "version": "0.1.0",
-  "identifier": "com.quddus.win-cipher",
+  "productName": "Win Cipher",
+  "version": "1.1.0",
+  "identifier": "com.quddus.wincipher",
   "build": {
     "beforeDevCommand": "pnpm dev",
     "devUrl": "http://localhost:1420",
@@ -26,10 +26,22 @@
   "bundle": {
     "active": true,
     "targets": ["nsis", "msi"],
+    "createUpdaterArtifacts": true,
     "icon": [
       "icons/32x32.png",
       "icons/128x128.png",
       "icons/icon.ico"
     ]
+  },
+  "plugins": {
+    "updater": {
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDk1QTc5OUU4NjU5ODNBNjEKUldSaE9waGw2Sm1ubGNaR2YzZzlJYkJsQmVZZGNyQ0F6OGFHTnZrVHBySWdRR200S0I2bzNXU3gK",
+      "endpoints": [
+        "https://github.com/quddus-larik/WinCipher/releases/latest/download/latest.json"
+      ],
+      "windows": {
+        "installMode": "passive"
+      }
+    }
   }
 }
