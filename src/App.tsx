@@ -24,7 +24,7 @@ function App() {
     } = useFileUpload(isWorking);
 
     return (
-        <div className={"flex h-svh w-full flex-col overflow-hidden bg-background"}>
+        <div className={"flex h-svh w-full flex-col overflow-hidden bg-background"} onContextMenu={(e) => e.preventDefault()}>
             <TitleBar/>
             <main
                 className={`flex min-h-0 flex-1 flex-col gap-3 items-center w-full overflow-y-auto ${files.length > 0 ? "justify-start" : "justify-center"}`}
