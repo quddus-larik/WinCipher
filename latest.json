@@ -1,11 +1,11 @@
 {
   "version": "1.1.2",
-  "notes": "Update and fix small bugs",
+  "notes": "fix updater function",
   "pub_date": "2026-11-10T14:02:04Z",
   "platforms": {
     "windows-x86_64": {
       "url": "https://github.com/quddus-larik/WinCipher/releases/download/v1.1.2/Win_Cipher_1.1.2_x64-setup.exe",
-      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVSaE9waGw2Sm1ubGVsaWRvSGl2U2p5aFE4TllCV1hpVTNZZHFDRFF5cWlxZEhmL3RpVE1PMm4rZW5FM003ckY2SnZENHpVZFNkaTZhbTN1UFdFMGlBK1BnR3d4OUVOVUFZPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzk0MjMyOTI0CWZpbGU6V2luIENpcGhlcl8xLjEuMF94NjQtc2V0dXAuZXhlCXZlcnNpb246MS4xLjAKc25ZRUt6dmREMS9ETnU2ZVpKWDRPNXIwc1dRT3JjcVB2QjllUUJxc2lDZU1yeEpLS2ZRNDdVMGZROWI5UTVBMFJrT3FiUXdXeGpqUHdkQ212QzdJQmc9PQo="
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVSaE9waGw2Sm1ubGRGVzZ3UVp3cCtoaVFVT01BSklaVjdQNnJlSC9NcWtycDc3S09aVTJHb0dTOWQyM0IwSHNiV2I3RE5MYzhxNEgrSzF6Kzh5SWMrOFZOL01LUitteVFZPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzk0Mjg0MjgyCWZpbGU6V2luIENpcGhlcl8xLjEuMl94NjQtc2V0dXAuZXhlCXZlcnNpb246MS4xLjIKR2xuSzlBMHl2UlRxS1JCak5PNWs0b210SHlqeGw3TU9OQzZzWU93ZmNxNHpZY3pJYVlCV3hYbGtwd0k2VmhqNCs5cnd4enlKL3FUQ2pwUXZ0M1ZiQXc9PQo="
     }
   }
 }
