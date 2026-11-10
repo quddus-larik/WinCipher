@@ -1,10 +1,10 @@
 {
-  "version": "1.1.1",
-  "notes": "Updater support for auto update.",
-  "pub_date": "2026-11-09T14:02:04Z",
+  "version": "1.1.2",
+  "notes": "Update and fix small bugs",
+  "pub_date": "2026-11-10T14:02:04Z",
   "platforms": {
     "windows-x86_64": {
-      "url": "https://github.com/quddus-larik/WinCipher/releases/download/v1.1.1/Win_Cipher_1.1.1_x64-setup.exe",
+      "url": "https://github.com/quddus-larik/WinCipher/releases/download/v1.1.2/Win_Cipher_1.1.2_x64-setup.exe",
       "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVSaE9waGw2Sm1ubGFKWXQ2aEhpbllqNmlSYVcvRjhwNXlqQzl3a2FNdWNGZFIrQkpzSjZFUE1KYW1ISmFzdEV4a2sxdmsyR0RldnZHd1BwRmg2ZndvUFBiQ2VHejBMMWdrPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzk0MjM0MjAxCWZpbGU6V2luIENpcGhlcl8xLjEuMV94NjQtc2V0dXAuZXhlCXZlcnNpb246MS4xLjEKUVBPNjcraGFxNjlmQzVqRWIxVGUxU2Y3VVRRQmNnMXR4NkUvRElXaXIrSHN6Q0QwR3BMYzh2M0ZBQ0ZUcmJ5UEZ5QkFaSnpxT2lWdVg4TGR5cFJlREE9PQo="
     }
   }
