@@ -40,7 +40,7 @@ function App() {
                     <UploadPrompt isDraggingFile={isDraggingFile}/>
                 )}
                 <input ref={fileInputRef} type="file"
-                       accept="image/*,audio/*,.mp3,.wav,.wave,.flac,.aac,.m4a,.ogg,.oga,.aiff,.aif,.aifc,.caf"
+                       accept="image/*,audio/*,.mp3,.wav,.wave,.flac,.aac,.m4a,.ogg,.oga,.aiff,.aif,.aifc,.caf,.doc,.docx,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
                        multiple disabled={isWorking}
                        className={"hidden"} onChange={handleFileInputChange}/>
 
