@@ -34,6 +34,16 @@ export const conversionFilesData = {
                 "possible_conversions": ["WAV", "FLAC", "MP3", "AAC", "M4A", "AIFF"]
             }
         ],
+        "document": [
+            {
+                "source_format": "DOC",
+                "possible_conversions": ["DOCX", "MARKDOWN", "HTML"]
+            },
+            {
+                "source_format": "DOCX",
+                "possible_conversions": ["MARKDOWN", "HTML", "PDF"]
+            }
+        ],
         "video": [
             {
                 "source_format": "MP4",
