@@ -4,10 +4,6 @@ description: Fast, private, offline file conversion for Windows.
 cover: https://raw.githubusercontent.com/quddus-larik/WinCipher/main/src/assets/ui.gif
 ---
 
-# WinCipher
-
-## Detailed description
-
 WinCipher is a small desktop app for converting files without uploading them anywhere. There are no accounts, no cloud services, no telemetry, and no ads: you drop files into the window, choose an output format, convert, and save the result to a folder you pick.
 
 Everything runs locally. The React frontend handles the file queue, format selection, progress, and errors, while the Rust backend performs the actual conversions in the background. Converted bytes are kept in memory only until you save or remove them. The interface supports single-file and batch workflows with a consistent two-step flow: **Convert** first, then **Save**.
