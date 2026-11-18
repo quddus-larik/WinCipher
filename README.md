@@ -35,7 +35,7 @@
 
 Most converters make you upload your files, create an account, or wait through an ad-filled website. WinCipher does none of that.
 
-- **Fast** — native image and audio conversion powered by Rust.
+- **Fast** — native image, audio, and document conversion powered by Rust.
 - **Private** — your files never leave your computer.
 - **Offline** — no internet connection required.
 - **Minimal** — a tiny Windows app built for one job: convert and save.
@@ -44,7 +44,7 @@ Most converters make you upload your files, create an account, or wait through a
 
 ## Supported formats
 
-WinCipher supports native image and audio conversion:
+WinCipher supports native image, audio, and document conversion:
 
 | Type | Input | Convert to |
 | --- | --- | --- |
@@ -59,8 +59,10 @@ WinCipher supports native image and audio conversion:
 | Audio | OGG / OGA | WAV, FLAC, MP3, AAC, M4A, AIFF |
 | Audio | AIFF / AIF / AIFC | WAV, FLAC, MP3, AAC, M4A |
 | Audio | CAF | WAV, FLAC, MP3, AAC, M4A, AIFF |
+| Document | DOC | DOCX, Markdown, HTML |
+| Document | DOCX | Markdown, HTML, PDF |
 
-Only conversions that can be completed by the native conversion engine are shown, so you never pick an unsupported output format. `MP4A` is accepted as an alias for `M4A`.
+Only conversions that can be completed by the native conversion engine are shown, so you never pick an unsupported output format. `MP4A` is accepted as an alias for `M4A`. PDF output is available for DOCX input; convert a legacy DOC file to DOCX first if you need a PDF.
 
 > Video conversion formats are scaffolded for future releases.
 
@@ -69,7 +71,7 @@ Only conversions that can be completed by the native conversion engine are shown
 1. Open the [Releases page](https://github.com/quddus-larik/WinCipher/releases).
 2. Download the latest Windows installer.
 3. Install and launch **WinCipher**.
-4. Drag images or audio files into the window — or click the **+** button to choose files.
+4. Drag images, audio, or document files into the window — or click the **+** button to choose files.
 5. Select an output format for each file, then click **Convert** or **Convert all**.
 6. Click **Save** or **Save all** and choose a destination folder using the native Windows folder picker.
 
@@ -100,20 +102,18 @@ pnpm tauri build
 
 The Windows installer and executable are written under `src-tauri/target/release/bundle/`.
 
-> **Note:** `tsconfig.json` still uses the deprecated `baseUrl` option, so the bundled `pnpm build` step can stop with `TS5101` until it is migrated. For a frontend-only check, use `pnpm exec vite build`.
+> **Note:** `tsconfig.json` no longer uses the deprecated `baseUrl` option, so `pnpm build` passes without `TS5101` workarounds.
 
 ### Type checking
 
-Until the TypeScript 6 `baseUrl` deprecation is migrated:
-
 ```bash
-pnpm exec tsc --noEmit --ignoreDeprecations 6.0
+pnpm exec tsc --noEmit
 ```
 
 ## Tech stack
 
 - **Tauri 2** — lightweight native desktop shell
-- **Rust** — image and audio decoding, conversion, and native file saving
+- **Rust** — image, audio, and document decoding, conversion, and native file saving
 - **React 19 + TypeScript 6** — UI and state
 - **Vite 8** — frontend tooling
 - **Tailwind CSS 4** — styling

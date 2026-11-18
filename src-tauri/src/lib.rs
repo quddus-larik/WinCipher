@@ -92,6 +92,46 @@ fn parse_audio_target(format: &str) -> Result<AudioTargetFormat, String> {
     }
 }
 
+#[derive(Clone, Copy)]
+enum DocumentTargetFormat {
+    Docx,
+    Markdown,
+    Html,
+    Pdf,
+}
+
+impl DocumentTargetFormat {
+    fn extension(&self) -> &'static str {
+        match self {
+            Self::Docx => "docx",
+            Self::Markdown => "md",
+            Self::Html => "html",
+            Self::Pdf => "pdf",
+        }
+    }
+}
+
+fn parse_document_target(format: &str) -> Result<DocumentTargetFormat, String> {
+    match format.trim().to_ascii_uppercase().as_str() {
+        "DOCX" => Ok(DocumentTargetFormat::Docx),
+        "MARKDOWN" | "MD" => Ok(DocumentTargetFormat::Markdown),
+        "HTML" => Ok(DocumentTargetFormat::Html),
+        "PDF" => Ok(DocumentTargetFormat::Pdf),
+        _ => Err(format!("Unsupported document output format: {format}")),
+    }
+}
+
+fn convert_docx_to_pdf(input: &[u8]) -> Result<Vec<u8>, String> {
+    match docxide_pdf::convert_docx_bytes_to_pdf_bytes(input) {
+        Ok(bytes) => Ok(bytes),
+        Err(primary_error) => dxpdf::convert(input).map_err(|fallback_error| {
+            format!(
+                "Could not convert the document to PDF: {primary_error}; fallback conversion also failed: {fallback_error}"
+            )
+        }),
+    }
+}
+
 fn output_file_name(file_name: &str, extension: &str) -> String {
     let stem = Path::new(file_name)
         .file_stem()
@@ -742,6 +782,79 @@ async fn convert_audio(
 }
 
 #[tauri::command]
+async fn convert_document(
+    state: tauri::State<'_, ConversionState>,
+    id: String,
+    file_name: String,
+    target_format: String,
+    data: String,
+) -> Result<ConvertedFile, String> {
+    let extension = Path::new(&file_name)
+        .extension()
+        .and_then(|extension| extension.to_str())
+        .unwrap_or_default()
+        .to_ascii_lowercase();
+
+    if !matches!(extension.as_str(), "doc" | "docx") {
+        return Err("Only DOC and DOCX documents can be converted.".to_string());
+    }
+
+    let input = STANDARD
+        .decode(data)
+        .map_err(|error| format!("Could not read the document data: {error}"))?;
+    let target = parse_document_target(&target_format)?;
+
+    if matches!(target, DocumentTargetFormat::Pdf) && extension != "docx" {
+        return Err("PDF output is only available for DOCX files.".to_string());
+    }
+
+    let output_name = output_file_name(&file_name, target.extension());
+
+    let bytes = tauri::async_runtime::spawn_blocking(move || -> Result<Vec<u8>, String> {
+        match target {
+            DocumentTargetFormat::Pdf => convert_docx_to_pdf(&input),
+            DocumentTargetFormat::Docx => {
+                let document = rwml::Document::open(&input)
+                    .map_err(|error| format!("Could not open the document: {error}"))?;
+                Ok(document.to_docx())
+            }
+            DocumentTargetFormat::Markdown => {
+                let document = rwml::Document::open(&input)
+                    .map_err(|error| format!("Could not open the document: {error}"))?;
+                Ok(document.to_markdown().into_bytes())
+            }
+            DocumentTargetFormat::Html => {
+                let document = rwml::Document::open(&input)
+                    .map_err(|error| format!("Could not open the document: {error}"))?;
+                Ok(document.to_html().into_bytes())
+            }
+        }
+    })
+    .await
+    .map_err(|error| error.to_string())??;
+
+    let size = bytes.len() as u64;
+
+    state
+        .files
+        .lock()
+        .map_err(|_| "The conversion store is unavailable.".to_string())?
+        .insert(
+            id.clone(),
+            StoredFile {
+                file_name: output_name.clone(),
+                bytes,
+            },
+        );
+
+    Ok(ConvertedFile {
+        id,
+        file_name: output_name,
+        size,
+    })
+}
+
+#[tauri::command]
 async fn save_converted_files(
     state: tauri::State<'_, ConversionState>,
     ids: Vec<String>,
@@ -811,6 +924,7 @@ pub fn run() {
             greet,
             convert_image,
             convert_audio,
+            convert_document,
             save_converted_files,
             discard_converted_file
         ])
@@ -887,5 +1001,30 @@ mod tests {
         assert_eq!(decoded_aiff.sample_rate, sample_rate);
         assert_eq!(decoded_aiff.channels, channels);
         assert_eq!(decoded_aiff.samples.len(), frame_count * channels);
+    }
+
+    #[test]
+    fn document_conversions_round_trip() {
+        let model = rwml::DocBuilder::new()
+            .heading(1, "WinCipher")
+            .paragraph("Document conversion works.")
+            .build();
+        let docx = rwml::write_docx(&model);
+
+        let document = rwml::Document::open(&docx).expect("open generated docx");
+        let markdown = document.to_markdown();
+        let html = document.to_html();
+
+        assert!(markdown.contains("WinCipher"));
+        assert!(html.contains("WinCipher"));
+
+        let rewritten = document.to_docx();
+        rwml::Document::open(&rewritten).expect("open rewritten docx");
+
+        let pdf = docxide_pdf::convert_docx_bytes_to_pdf_bytes(&docx)
+            .or_else(|_| dxpdf::convert(&docx))
+            .expect("convert docx to pdf");
+
+        assert!(pdf.starts_with(b"%PDF"));
     }
 }

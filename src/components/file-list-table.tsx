@@ -20,7 +20,8 @@ import {ArrowRight02Icon, Cancel01Icon, CheckIcon} from '@hugeicons/core-free-ic
 import {Button} from "@/components/ui/button.tsx";
 import {getImageConversionOptions, getImageFormat, isImageFile} from "@/lib/image-utils";
 import {getAudioConversionOptions, getAudioFormat} from "@/lib/audio-utils";
-import {isAudioFile, isSupportedFile} from "@/lib/file-utils";
+import {getDocumentConversionOptions, getDocumentFormat} from "@/lib/document-utils";
+import {isAudioFile, isDocumentFile, isSupportedFile} from "@/lib/file-utils";
 
 
 type FileListTableProps = {
@@ -186,7 +187,7 @@ function FilePreview({file}: { file: File }) {
 
     return (
         <Avatar>
-            <AvatarFallback className={"rounded-sm"}>{isAudioFile(file) ? "AU" : "CN"}</AvatarFallback>
+            <AvatarFallback className={"rounded-sm"}>{isAudioFile(file) ? "AU" : isDocumentFile(file) ? "DOC" : "CN"}</AvatarFallback>
         </Avatar>
     );
 }
@@ -204,7 +205,8 @@ function ConvertCell({
 }) {
     const imageFormat = getImageFormat(file);
     const audioFormat = imageFormat ? null : getAudioFormat(file);
-    const sourceFormat = imageFormat ?? audioFormat;
+    const documentFormat = imageFormat || audioFormat ? null : getDocumentFormat(file);
+    const sourceFormat = imageFormat ?? audioFormat ?? documentFormat;
 
     if (!sourceFormat) {
         return <span>{getFileType(file)}</span>;
@@ -214,7 +216,9 @@ function ConvertCell({
         ? getImageConversionOptions(imageFormat)
         : audioFormat
             ? getAudioConversionOptions(audioFormat)
-            : [];
+            : documentFormat
+                ? getDocumentConversionOptions(documentFormat)
+                : [];
 
     if (options.length === 0) {
         return <span>{sourceFormat}</span>;
@@ -340,7 +344,11 @@ export function FileListTable({files, onRemove, onBusyChange}: FileListTableProp
                 });
             }, 300);
 
-            const command = isAudioFile(file) ? "convert_audio" : "convert_image";
+            const command = isAudioFile(file)
+                ? "convert_audio"
+                : isDocumentFile(file)
+                    ? "convert_document"
+                    : "convert_image";
             const result = await invoke<ConvertedFile>(command, {
                 id: outputId,
                 fileName: file.name,
