@@ -22,15 +22,58 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Verify tag matches app version
+      - name: Verify or bump app version
         shell: pwsh
         run: |
-          $version = "${{ github.ref_name }}" -replace '^v',''
-          $tauri = (Get-Content src-tauri/tauri.conf.json -Raw | ConvertFrom-Json).version
-          $pkg = (Get-Content package.json -Raw | ConvertFrom-Json).version
-          if ($version -ne $tauri -or $version -ne $pkg) {
-            throw "Tag v$version does not match tauri.conf.json ($tauri) or package.json ($pkg)."
+          $tagVersion = "${{ github.ref_name }}" -replace '^v',''
+          $pkgPath = "package.json"
+          $tauriPath = "src-tauri/tauri.conf.json"
+          $cargoPath = "src-tauri/Cargo.toml"
+
+          $pkg = (Get-Content $pkgPath -Raw | ConvertFrom-Json).version
+          $tauri = (Get-Content $tauriPath -Raw | ConvertFrom-Json).version
+          $cargoMatch = Get-Content $cargoPath -Raw | Select-String '(?m)^version\s*=\s*"([^"]+)"'
+          if (-not $cargoMatch) {
+            throw "Could not read version from $cargoPath."
           }
+          $cargo = $cargoMatch.Matches[0].Groups[1].Value
+
+          if ($pkg -ne $tauri -or $pkg -ne $cargo) {
+            throw "Version files disagree: package.json ($pkg), tauri.conf.json ($tauri), Cargo.toml ($cargo)."
+          }
+
+          foreach ($value in @($pkg, $tagVersion)) {
+            if ($value -notmatch '^\d+\.\d+\.\d+$') {
+              throw "Invalid version format '$value'. Expected major.minor.patch."
+            }
+          }
+
+          if ($pkg -eq $tagVersion) {
+            Write-Host "Version files already match v$tagVersion."
+            exit 0
+          }
+
+          $current = [version]$pkg
+          $target = [version]$tagVersion
+          $isPatchBump = (($target.Major -eq $current.Major) -and ($target.Minor -eq $current.Minor) -and ($target.Build -eq ($current.Build + 1)))
+
+          if (-not $isPatchBump) {
+            throw "Tag v$tagVersion does not match version files ($pkg). Only an automatic one-patch bump is supported."
+          }
+
+          Write-Host "Version files are one patch behind. Bumping $pkg -> $tagVersion."
+
+          $pkgContent = Get-Content $pkgPath -Raw
+          $pkgContent = $pkgContent -replace '("version"\s*:\s*")[^"]+(")', ('$1' + $tagVersion + '$2')
+          Set-Content $pkgPath -Value $pkgContent -Encoding utf8 -NoNewline
+
+          $tauriContent = Get-Content $tauriPath -Raw
+          $tauriContent = $tauriContent -replace '("version"\s*:\s*")[^"]+(")', ('$1' + $tagVersion + '$2')
+          Set-Content $tauriPath -Value $tauriContent -Encoding utf8 -NoNewline
+
+          $cargoContent = Get-Content $cargoPath -Raw
+          $cargoContent = $cargoContent -replace '(?m)^(version\s*=\s*")[^"]+(")', ('$1' + $tagVersion + '$2')
+          Set-Content $cargoPath -Value $cargoContent -Encoding utf8 -NoNewline
 
       - uses: pnpm/action-setup@v4
         with:
