@@ -17,10 +17,6 @@ WinCipher currently handles three families of files:
 - **Audio** — MP3, WAV, FLAC, AAC, M4A/MP4A, OGG, AIFF, and CAF inputs, with outputs including WAV, FLAC, MP3, AAC, M4A, and AIFF.
 - **Documents** — DOC and DOCX inputs, convertible to Markdown, HTML, DOCX, or (for DOCX) PDF.
 
-Only formats the native engine can actually produce are offered in the UI. Native Windows dialogs handle file selection and saving, and the app includes a signed updater that only accepts newer, correctly signed releases.
-
-[View the full README](README.md) for supported conversions and install instructions.
-
 ## Technologies
 
 ### Desktop and runtime
