@@ -1,8 +1,9 @@
-import {useEffect, useState} from "react";
+import {useEffect, useRef, useState} from "react";
 import {
     AlertCircleIcon,
     Cancel01Icon,
     MinusSignIcon,
+    RefreshIcon,
 } from "@hugeicons/core-free-icons";
 import {HugeiconsIcon} from "@hugeicons/react";
 import {isTauri} from "@tauri-apps/api/core";
@@ -18,6 +19,12 @@ import {
     DialogHeader,
     DialogTitle,
 } from "@/components/ui/dialog";
+
+type UpdateDialog = {
+    title: string;
+    message: string;
+    detail: string;
+};
 
 function getAppWindow() {
     return isTauri() ? getCurrentWindow() : null;
@@ -37,41 +44,73 @@ function getErrorMessage(error: unknown) {
 
 export function TitleBar() {
     const [update, setUpdate] = useState<Update | null>(null);
+    const [isChecking, setIsChecking] = useState(false);
     const [isUpdating, setIsUpdating] = useState(false);
-    const [updateError, setUpdateError] = useState<string | null>(null);
-    const [isErrorDialogOpen, setIsErrorDialogOpen] = useState(false);
+    const [dialog, setDialog] = useState<UpdateDialog | null>(null);
 
-    useEffect(() => {
-        if (!isTauri()) return;
+    const activeRef = useRef(true);
+    const updateHandleRef = useRef<Update | null>(null);
 
-        let active = true;
-        let updateHandle: Update | null = null;
+    const closeUpdateHandle = () => {
+        const handle = updateHandleRef.current;
+        updateHandleRef.current = null;
 
-        check()
-            .then((availableUpdate) => {
-                if (!active) {
-                    if (availableUpdate) {
-                        void availableUpdate.close().catch(() => {
-                        });
-                    }
+        if (handle) {
+            void handle.close().catch(() => {
+            });
+        }
+    };
 
-                    return;
+    const showError = (title: string, message: string, error: unknown) => {
+        setDialog({title, message, detail: getErrorMessage(error)});
+    };
+
+    const runUpdateCheck = async () => {
+        if (isChecking) return;
+
+        setIsChecking(true);
+        setDialog(null);
+        setUpdate(null);
+        closeUpdateHandle();
+
+        try {
+            const availableUpdate = await check();
+
+            if (!activeRef.current) {
+                if (availableUpdate) {
+                    void availableUpdate.close().catch(() => {
+                    });
                 }
 
-                updateHandle = availableUpdate;
-                setUpdate(availableUpdate);
-            })
-            .catch(() => {
-                // An unavailable update server should not block app startup.
-            });
+                return;
+            }
+
+            updateHandleRef.current = availableUpdate;
+            setUpdate(availableUpdate);
+        } catch (error) {
+            console.error("Could not check for WinCipher updates.", error);
+
+            if (activeRef.current) {
+                showError(
+                    "Update check failed",
+                    "WinCipher could not check for updates. Check your connection and try again.",
+                    error
+                );
+            }
+        } finally {
+            if (activeRef.current) {
+                setIsChecking(false);
+            }
+        }
+    };
+
+    useEffect(() => {
+        activeRef.current = true;
+        void runUpdateCheck();
 
         return () => {
-            active = false;
-
-            if (updateHandle) {
-                void updateHandle.close().catch(() => {
-                });
-            }
+            activeRef.current = false;
+            closeUpdateHandle();
         };
     }, []);
 
@@ -79,16 +118,18 @@ export function TitleBar() {
         if (!update || isUpdating) return;
 
         setIsUpdating(true);
-        setUpdateError(null);
-        setIsErrorDialogOpen(false);
+        setDialog(null);
 
         try {
             await update.downloadAndInstall();
             await relaunch();
         } catch (error) {
             console.error("Could not install the WinCipher update.", error);
-            setUpdateError(getErrorMessage(error));
-            setIsErrorDialogOpen(true);
+            showError(
+                "Update failed",
+                `WinCipher could not update to version ${update.version}. Check your connection and try again.`,
+                error
+            );
         } finally {
             setIsUpdating(false);
         }
@@ -113,7 +154,18 @@ export function TitleBar() {
                         >
                             {isUpdating ? "Updating…" : "Update now"}
                         </Button>
-                    ) : null}
+                    ) : (
+                        <Button
+                            aria-label={"Check for updates"}
+                            size={"sm"}
+                            variant={"ghost"}
+                            isDisabled={isChecking || isUpdating}
+                            onPress={() => void runUpdateCheck()}
+                        >
+                            <HugeiconsIcon icon={RefreshIcon} strokeWidth={2} className={"size-3.5"}/>
+                            {isChecking ? "Checking…" : "Check for updates"}
+                        </Button>
+                    )}
                     <Button
                         aria-label={"Minimize"}
                         variant={"ghost"}
@@ -135,8 +187,10 @@ export function TitleBar() {
             </header>
 
             <Dialog
-                isOpen={isErrorDialogOpen}
-                onOpenChange={setIsErrorDialogOpen}
+                isOpen={dialog !== null}
+                onOpenChange={(open) => {
+                    if (!open) setDialog(null);
+                }}
                 isDismissable={false}
                 showCloseButton={false}
             >
@@ -147,14 +201,11 @@ export function TitleBar() {
                             strokeWidth={2}
                             className={"size-4 shrink-0"}
                         />
-                        <DialogTitle>Update failed</DialogTitle>
+                        <DialogTitle>{dialog?.title}</DialogTitle>
                     </div>
-                    <DialogDescription>
-                        WinCipher could not update to version {update?.version}. Check your
-                        connection and try again.
-                    </DialogDescription>
+                    <DialogDescription>{dialog?.message}</DialogDescription>
                     <DialogDescription className={"break-words text-foreground/80"}>
-                        {updateError}
+                        {dialog?.detail}
                     </DialogDescription>
                 </DialogHeader>
                 <DialogFooter>
