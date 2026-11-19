@@ -21,10 +21,14 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Verify or bump app version
+        id: version
         shell: pwsh
         run: |
+          "bumped=false" >> $env:GITHUB_OUTPUT
           $tagVersion = "${{ github.ref_name }}" -replace '^v',''
           $pkgPath = "package.json"
           $tauriPath = "src-tauri/tauri.conf.json"
@@ -62,6 +66,7 @@ jobs:
           }
 
           Write-Host "Version files are one patch behind. Bumping $pkg -> $tagVersion."
+          "bumped=true" >> $env:GITHUB_OUTPUT
 
           $pkgContent = Get-Content $pkgPath -Raw
           $pkgContent = $pkgContent -replace '("version"\s*:\s*")[^"]+(")', ('${1}' + $tagVersion + '${2}')
@@ -74,6 +79,21 @@ jobs:
           $cargoContent = Get-Content $cargoPath -Raw
           $cargoContent = $cargoContent -replace '(?m)^(version\s*=\s*")[^"]+(")', ('${1}' + $tagVersion + '${2}')
           Set-Content $cargoPath -Value $cargoContent -Encoding utf8 -NoNewline
+
+      - name: Commit version bump
+        if: steps.version.outputs.bumped == 'true'
+        shell: pwsh
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add package.json src-tauri/tauri.conf.json src-tauri/Cargo.toml
+          git diff --staged --quiet
+          if ($LASTEXITCODE -eq 0) {
+            Write-Host "No version changes to commit."
+            exit 0
+          }
+          git commit -m "chore: bump version to ${{ github.ref_name }}"
+          git push origin HEAD:refs/heads/main
 
       - uses: pnpm/action-setup@v4
         with:
