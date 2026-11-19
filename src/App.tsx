@@ -53,7 +53,7 @@ function App() {
                     </TabsList>
                 </Tabs>
                 <Button className={"absolute bottom-3 left-3"} variant={"secondary"} size={"icon"}
-                        isDisabled={true}><HugeiconsIcon
+                        isDisabled={false}><HugeiconsIcon
                     icon={Settings03Icon}/></Button>
                 <Button className={"absolute bottom-3 right-3"} variant={"secondary"} size={"icon"}
                         isDisabled={isWorking} onClick={openFilePicker}><HugeiconsIcon
