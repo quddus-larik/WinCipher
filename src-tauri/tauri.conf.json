@@ -42,7 +42,7 @@
   },
   "plugins": {
     "updater": {
-      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEU3MzhFNDY3MzU5NTc1MDkKUldRSmRaVTFaK1E0NTBaVWI0bUpxN1lwbUh6dVFUbGwwVkVqZDJkRllFZ1V4cFhLM00xZlFkMVEK",
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEIyOEI4NzVFMzgzODM5RkMKUldUOE9UZzRYb2VMc3JhNHc3MUY4RVRxOFpDalp4akdwUXl0VnFEMVd1Y1RVMEFFUU44dW40VUwK",
       "endpoints": [
         "https://github.com/quddus-larik/WinCipher/releases/latest/download/latest.json"
       ],
