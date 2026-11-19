@@ -64,15 +64,15 @@ jobs:
           Write-Host "Version files are one patch behind. Bumping $pkg -> $tagVersion."
 
           $pkgContent = Get-Content $pkgPath -Raw
-          $pkgContent = $pkgContent -replace '("version"\s*:\s*")[^"]+(")', ('$1' + $tagVersion + '$2')
+          $pkgContent = $pkgContent -replace '("version"\s*:\s*")[^"]+(")', ('${1}' + $tagVersion + '${2}')
           Set-Content $pkgPath -Value $pkgContent -Encoding utf8 -NoNewline
 
           $tauriContent = Get-Content $tauriPath -Raw
-          $tauriContent = $tauriContent -replace '("version"\s*:\s*")[^"]+(")', ('$1' + $tagVersion + '$2')
+          $tauriContent = $tauriContent -replace '("version"\s*:\s*")[^"]+(")', ('${1}' + $tagVersion + '${2}')
           Set-Content $tauriPath -Value $tauriContent -Encoding utf8 -NoNewline
 
           $cargoContent = Get-Content $cargoPath -Raw
-          $cargoContent = $cargoContent -replace '(?m)^(version\s*=\s*")[^"]+(")', ('$1' + $tagVersion + '$2')
+          $cargoContent = $cargoContent -replace '(?m)^(version\s*=\s*")[^"]+(")', ('${1}' + $tagVersion + '${2}')
           Set-Content $cargoPath -Value $cargoContent -Encoding utf8 -NoNewline
 
       - uses: pnpm/action-setup@v4
