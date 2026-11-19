@@ -1,6 +1,6 @@
 [package]
 name = "win-cipher"
-version = "1.1.7"
+version = "1.1.8"
 description = "Fast, private, offline image, audio, and document conversion for Windows."
 authors = ["you"]
 edition = "2024"
